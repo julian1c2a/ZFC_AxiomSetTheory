@@ -48,7 +48,6 @@ set_option diagnostics.threshold 1000
       -- Axioma de Reemplazo: Para cada relación funcional P(x, y) (es decir, para cada x, existe a lo sumo un y tal que P(x, y) es verdadera),
       -- y para cada conjunto A, existe un conjunto B tal que y pertenece a B si y solo si existe un x en A tal que P(x, y) es verdadera.
       -- Formalmente: ∀ (P : U → U → Prop), (∀ (x : U), ∃! (y : U), P x y) → ∀ (a : U), ∃ (b : U), ∀ (y : U), mem y b ↔ (∃ (x : U), mem x a ∧ P x y)
-      -- Lean 4 tiene `ExistsUnique` (∃!) para esto.
       replacement : ∀ (P : U → U → Prop), (∀ (x : U), ∃! (y : U), P x y) → ∀ (a : U), ∃ (b : U), ∀ (y : U), mem y b ↔ (∃ (x : U), mem x a ∧ P x y)
 
       -- Axioma de Elección: Para cualquier conjunto de conjuntos no vacíos,
