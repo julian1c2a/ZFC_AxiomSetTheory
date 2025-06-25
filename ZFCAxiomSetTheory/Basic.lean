@@ -85,25 +85,34 @@ namespace ZFC
     -- 2. Definimos 'emptyset' usando la prueba de unicidad.
     noncomputable def emptyset : U := choose empty_set_unique
     -- 3. Notación para el conjunto vacío.
-    notation "∅" => ZFC.emptyset
+    notation "∅" => emptyset
 
     noncomputable def singleton (x : U) : U := choose (pairing x x)
 
+    notation "{ " x " }" => singleton x
+
     noncomputable def pair (x y : U) : U := choose (pairing x y)
 
-    noncomputable def succesor (x : U) : U :=
-      choose (union (pair x (singleton x)))
+    notation "{" x ", " y "}" => pair x y
 
-    notation " σ " => ZFC.succesor
+    noncomputable def succesor (x : U) : U := { x ,  { x } }
 
-    noncomputable def ordered_pair (x y : U) : U :=
-      choose (pairing (singleton x) (pair x y))
+    notation " σ " => succesor
 
-    notation "⟨" x ", " y "⟩" => ZFC.ordered_pair x y
+    noncomputable def ordered_pair (x y : U) : U := { { x } , { x , y } }
+
+    noncomputable def ordered_pair_eq (x y : U) : Prop :=
+      ∀ (z : U), z ∈ ordered_pair x y ↔ ( z = {x} ∨ z = {x, y} )
+
+    noncomputable def is_a_ordered_pair (w : U) : Prop :=
+      ∀ (z : U), z ∈ w ↔ ∃ (x y : U), ( z = {x} ∨ z = {x, y} ) ∧
+        (∀ (u : U), u ∈ w → ∀ (v : U), (v ∈ z → v ∈ u) ∨ (v ∈ u → v ∈ z))
+
+    notation "⟨" x ", " y "⟩" => ordered_pair x y
 
     noncomputable def union_of_two (x y : U) : U := choose (union (pair x y))
 
-    notation x " ∪ " y => ZFC.union_of_two x y
+    notation x " ∪ " y => union_of_two x y
 
     theorem mem_union_of_two (z x y : U) :
         z ∈ (x ∪ y) ↔ z ∈ x ∨ z ∈ y
@@ -217,6 +226,12 @@ namespace ZFC
     -- Notación para la diferencia de conjuntos
     notation x "⧵" y => ZFC.set_difference x y
 
+    noncomputable def snd_set (p : U) : U :=
+      singleton (choose (comprehension p (fun z => z ∈ (⋃ p) ∧ is_a_ordered_pair p)))
+
+    noncomputable def fst_set (p : U) : U :=
+      singleton (choose (comprehension p (fun z => z ∈ (⋃ p) ∧ (z ∉ snd_set p) ∧ is_a_ordered_pair p)))
+
     noncomputable def set_power (x : U) : U :=
       choose (power_set x)
 
@@ -238,7 +253,7 @@ namespace ZFC
     notation x " ⊇ " y => ZFC.superset x y
 
     noncomputable def disjoint (x y : U) : Prop :=
-      ∀ (z: U), z ∈ x → ¬ (z ∈ y)
+      ∀ (z: U), z ∈ x ↔ ¬ (z ∈ y)
 
     notation x "⟂" y => ZFC.disjoint x y
 
@@ -255,16 +270,76 @@ namespace ZFC
 
     --notation R " : " A " → " B => ZFC.is_relation R A B
 
-    noncomputable def image (R A B : U) : U :=
-      choose (comprehension R (fun y => y ∈ B ∧ ∃ x, x ∈ A ∧ ⟨x, y⟩ ∈ R))
+    noncomputable def is_reflexive (R A : U) : Prop :=
+      (is_relation R A A) ∧ ∀ (x : U), x ∈ A → ⟨x, x⟩ ∈ R
 
-    noncomputable def domain (R A B : U) : U :=
-      choose (comprehension R (fun x => x ∈ A ∧ ∃ y, y ∈ B ∧ ⟨x, y⟩ ∈ R))
+    noncomputable def is_irreflexive (R A : U) : Prop :=
+      (is_relation R A A) ∧ ∀ (x : U), x ∈ A → ⟨x, x⟩ ∉ R
 
-    
+    noncomputable def is_symmetric (R A : U) : Prop :=
+      (is_relation R A A) ∧ ∀ (x y : U), x ∈ A → y ∈ A → ⟨x, y⟩ ∈ R → ⟨y, x⟩ ∈ R
+
+    noncomputable def is_asymmetric (R A : U) : Prop :=
+      (is_relation R A A) ∧ ∀ (x y : U), x ∈ A → y ∈ A → ⟨x, y⟩ ∈ R → ⟨y, x⟩ ∉ R
+
+    noncomputable def is_antisymmetric (R A : U) : Prop :=
+      (is_relation R A A) ∧ ∀ (x y : U), x ∈ A → y ∈ A → ⟨x, y⟩ ∈ R → ⟨y, x⟩ ∈ R → x = y
+
+    noncomputable def is_transitive (R A : U) : Prop :=
+      (is_relation R A A) ∧ ∀ (x y z : U),
+        x ∈ A → y ∈ A → z ∈ A → ⟨x, y⟩ ∈ R → ⟨y, z⟩ ∈ R → ⟨x, z⟩ ∈ R
+
+    noncomputable def is_equivalence (R A : U) : Prop :=
+      (is_relation R A A) ∧
+        is_reflexive R A ∧ is_symmetric R A ∧ is_transitive R A
+
+    noncomputable def is_a_covering (A b : U) : Prop := (A ⊆ Πb) ∧ (b ⊆ ⋃A)
+
+    noncomputable def is_a_partition (A b : U) : Prop :=
+      is_a_covering A b ∧
+        (∀ (x y : U), x ∈ A → y ∈ A → x ≠ y → (∀ (z: U), z ∉ x ∩ y))
+
+    notation A " ⊢ " b => is_a_partition A b
+
+    noncomputable def is_strict_order (R A : U) : Prop :=
+      (is_relation R A A) ∧
+        is_asymmetric R A ∧ is_transitive R A
+
+    noncomputable def is_order (R A : U) : Prop :=
+      (is_relation R A A) ∧
+        is_reflexive R A ∧ is_antisymmetric R A ∧ is_transitive R A
+
+    noncomputable def is_total_order (R A : U) : Prop :=
+      (is_order R A) ∧
+        ∀ (x y : U), x ∈ A → y ∈ A → (⟨x, y⟩ ∈ R ∨ ⟨y, x⟩ ∈ R)
+
+    noncomputable def is_total_strict_order (R A : U) : Prop :=
+      (is_strict_order R A) ∧
+        ∀ (x y : U), x ∈ A → y ∈ A → x ≠ y → (⟨x, y⟩ ∈ R ∨ ⟨y, x⟩ ∈ R)
+
+    noncomputable def image (R A : U) : U :=
+      choose (comprehension R (fun y => ∃ x, x ∈ A ∧ ⟨x, y⟩ ∈ R))
+
+    notation R "''" A => ZFC.image R A
+
+    noncomputable def domain (R : U) : U :=
+      choose (comprehension R (fun x => ∃ z, z ∈ R ∧ ( ∃ y, z = ⟨x, y⟩ ) ) )
+
+    notation "dom" R => ZFC.domain R
+
+    noncomputable def restriction (R S : U) : U :=
+      choose (comprehension R (fun z => ∃ x y, x ∈ S ∧ z = ⟨x, y⟩ ∧ z ∈ R))
+
+    notation R " ↾ " S => ZFC.restriction R S
 
     noncomputable def is_function (f A B : U) : Prop :=
       (is_relation f A B) ∧ (∀ (x : U), x ∈ A → ∃! (y : U), y ∈ B ∧ ⟨x, y⟩ ∈ f)
+
+    noncomputable def is_injective (f A B : U) : Prop :=
+      (is_function f A B) ∧ ∀ (x1 x2 : U), x1 ∈ A → x2 ∈ A → (⟨x1, f '' A⟩ ∈ f) → (⟨x2, f '' A⟩ ∈ f) → x1 = x2
+
+    noncomputable def is_surjective (f A B : U) : Prop :=
+      (is_function f A B) ∧ ∀ (y : U), y ∈ B → ∃ (x : U), x ∈ A ∧ ⟨x, y⟩ ∈ f
 
 
 end ZFC
