@@ -51,7 +51,7 @@ namespace SetUniverse
   theorem PairSet_is_specified (x : U) (P : U → Prop) :
 
   notation " { " x ", " y " } " => PairSet x y
-  
+
   end PairingAxiom
 end SetUniverse
 
