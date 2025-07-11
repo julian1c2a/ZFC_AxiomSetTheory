@@ -20,7 +20,7 @@ namespace SetUniverse
   notation:50 lhs:51 " ∈ " rhs:51 => mem lhs rhs
   notation:50 lhs:51 " ∉ " rhs:51 => ¬(lhs ∈ rhs)
 
-  /-! ### Axioma de extensionalidad de conjuntos ### -/
+  /-! ### Axioma de Extensionalidad de Conjuntos ### -/
   /-! ### ExtSet : x = y ↔ ∀ z, z ∈ x ↔ z ∈ y ### -/
   axiom ExtSet (x y : U): (∀ (z: U), z ∈ x ↔ z ∈ y) → (x = y)
 
