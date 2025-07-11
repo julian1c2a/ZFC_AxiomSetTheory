@@ -393,4 +393,7 @@ export SetUniverse.SpecificationAxiom (
     BinIntersection_associative BinIntersection_absorbent_elem
     BinIntersection_with_subseteq BinIntersection_with_subseteq_full
     BinIntersection_with_empty BinIntersection_idempotence
+    Difference Difference_is_specified DifferenceUniqueSet
+    Difference_subset Difference_with_superseteq Difference_with_empty
+    Difference_self_empty Difference_disjoint
 )
