@@ -198,32 +198,199 @@ namespace SetUniverse
       exact h_w_in_bin_intersection
 
   theorem BinIntersection_absorbent_elem (x : U) :
-    (x ∩ ∅ ) = ∅ := by
+    (x ∩ ∅) = ∅
+      := by
     apply ExtSet
     intro z
     constructor
     · -- Dirección ->
       intro h_z_in_bin_intersection
       have h_bin_intersection := BinIntersection_is_specified x ∅ z
-      have h_z_in_empty : z ∈ ∅ := by
-        apply EmptySet_is_empty z
       have h_both := h_bin_intersection.mp h_z_in_bin_intersection
       have h_z_in_x : z ∈ x := h_both.1
       have h_z_in_empty : z ∈ ∅ := h_both.2
       exact h_z_in_empty
     · -- Dirección <-
       intro h_z_in_empty
-      have h_bin_intersection := BinIntersection_is_specified x ∅ z
-      have h_z_in_empty : z ∈ ∅ := by
-        apply EmptySet_is_empty z
-      have h_both := h_bin_intersection.mp h_z_in_empty
+      exact False.elim (EmptySet_is_empty z h_z_in_empty)
+
+  theorem BinIntersection_with_subseteq (x y : U) :
+    x ⊆ y → (x ∩ y) ⊆ x
+      := by
+    intro h_subset z h_z_in_bin_intersection
+    have h_bin_intersection := BinIntersection_is_specified x y z
+    have h_both := h_bin_intersection.mp h_z_in_bin_intersection
+    have h_z_in_x : z ∈ x := h_both.1
+    have h_z_in_y : z ∈ y := h_both.2
+    exact h_z_in_x
+
+  theorem BinIntersection_with_subseteq_full (x y : U) :
+    x ⊆ y ↔ (x ∩ y) = x
+      := by
+    constructor
+    · -- Direction: x ⊆ y → (x ∩ y) = x
+      intro h_subset
+      apply ExtSet
+      intro z
+      constructor
+      · -- z ∈ (x ∩ y) → z ∈ x
+        intro h_z_in_intersection
+        have h_bin_intersection := BinIntersection_is_specified x y z
+        have h_both := h_bin_intersection.mp h_z_in_intersection
+        exact h_both.1
+      · -- z ∈ x → z ∈ (x ∩ y)
+        intro h_z_in_x
+        have h_z_in_y := h_subset z h_z_in_x
+        exact (BinIntersection_is_specified x y z).mpr ⟨h_z_in_x, h_z_in_y⟩
+    · -- Direction: (x ∩ y) = x → x ⊆ y
+      intro h_eq z h_z_in_x
+      have h_z_in_intersection : z ∈ (x ∩ y) := by
+        rw [h_eq]
+        exact h_z_in_x
+      have h_bin_intersection := BinIntersection_is_specified x y z
+      have h_both := h_bin_intersection.mp h_z_in_intersection
+      exact h_both.2
+
+  theorem BinIntersection_with_empty (x : U) :
+    (x ∩ ∅) = ∅
+      := by
+    exact BinIntersection_absorbent_elem x
+
+  theorem BinIntersection_idempotence (x : U) :
+    (x ∩ x) = x
+      := by
+    apply ExtSet
+    intro z
+    constructor
+    · -- Dirección ->
+      intro h_z_in_bin_intersection
+      have h_bin_intersection := BinIntersection_is_specified x x z
+      have h_both := h_bin_intersection.mp h_z_in_bin_intersection
+      exact h_both.1
+    · -- Dirección <-
+      intro h_z_in_x
+      exact (BinIntersection_is_specified x x z).mpr ⟨h_z_in_x, h_z_in_x⟩
+
+  /-! ### Definición de la Diferencia de Conjuntos ### -/
+  noncomputable def Difference (x y : U) : U :=
+    choose (SpecificationUnique x (fun z => z ∉ y))
+
+  /-! ### Notación estándar de la Diferencia de Conjuntos ### -/
+  notation:50 lhs:51 " \\ " rhs:51 => Difference lhs rhs
+
+  theorem Difference_is_specified (x y : U) :
+    ∀ (z : U), z ∈ (x \ y) ↔ (z ∈ x ∧ z ∉ y)
+      := by
+    intro z
+    have h := choose_spec (SpecificationUnique x fun z => z ∉ y)
+    exact h.1 z
+
+  theorem DifferenceUniqueSet (x y : U) :
+    ∃! (z : U), ∀ (w : U), w ∈ z ↔ (w ∈ x ∧ w ∉ y)
+      := by
+    apply ExistsUnique.intro (Difference x y)
+    · -- Existencia de la diferencia binaria
+      exact Difference_is_specified x y
+    · -- Unicidad de la diferencia binaria
+      intro z hz_difference
+      apply (ExtSet z (Difference x y))
+      intro w
+      constructor
+      · -- Dirección ->
+        intro hw_in_z
+        have h_both := (hz_difference w).mp hw_in_z
+        have h_w_in_x : w ∈ x := h_both.1
+        have h_w_not_in_y : w ∉ y := h_both.2
+        exact (Difference_is_specified x y w).mpr ⟨h_w_in_x, h_w_not_in_y⟩
+      · -- Dirección <-
+        intro hw_in_difference
+        have h_both := (Difference_is_specified x y w).mp hw_in_difference
+        exact (hz_difference w).mpr h_both
+
+  theorem Difference_subset (x y : U) :
+    (x \ y) ⊆ x
+      := by
+    intro z h_z_in_difference
+    have h_difference := Difference_is_specified x y z
+    have h_both := h_difference.mp h_z_in_difference
+    exact h_both.1
+
+  theorem Difference_with_superseteq (x : U) {y : U} (h_x_superseteq_y : x ⊆ y) :
+    (x \ y) = ∅ := by
+    apply ExtSet
+    intro z
+    constructor
+    · -- Dirección ->
+      intro h_z_in_difference
+      have h_difference := Difference_is_specified x y z
+      have h_both := h_difference.mp h_z_in_difference
       have h_z_in_x : z ∈ x := h_both.1
-      have h_z_in_empty : z ∈ ∅ := h_both.2
-      exact h_z_in_empty
+      have h_z_not_in_y : z ∉ y := h_both.2
+      have h_z_in_y : z ∈ y := h_x_superseteq_y z h_z_in_x
+      exact False.elim (h_z_not_in_y h_z_in_y)
+    · -- Dirección <-
+      intro h_z_in_empty
+      exact False.elim (EmptySet_is_empty z h_z_in_empty)
+
+  theorem Difference_with_empty (x : U) :
+    (x \ ∅) = x
+      := by
+    apply ExtSet
+    intro z
+    constructor
+    · -- Dirección ->
+      intro h_z_in_difference
+      have h_difference := Difference_is_specified x ∅ z
+      have h_both := h_difference.mp h_z_in_difference
+      exact h_both.1
+    · -- Dirección <-
+      intro h_z_in_x
+      exact (Difference_is_specified x ∅ z).mpr ⟨h_z_in_x, EmptySet_is_empty z⟩
+
+  theorem Difference_self_empty (x : U) :
+    (x \ x) = ∅
+      := by
+    apply ExtSet
+    intro z
+    constructor
+    · -- Dirección ->
+      intro h_z_in_difference
+      have h_difference := Difference_is_specified x x z
+      have h_both := h_difference.mp h_z_in_difference
+      have h_z_in_x : z ∈ x := h_both.1
+      have h_z_not_in_x : z ∉ x := h_both.2
+      exact False.elim (h_z_not_in_x h_z_in_x)
+    · -- Dirección <-
+      intro h_z_in_empty
+      exact False.elim (EmptySet_is_empty z h_z_in_empty)
+
+  theorem Difference_disjoint (x : U) {y: U} (h_disjoint : x ⟂ y) :
+    (x \ y) = x
+      := by
+    apply ExtSet
+    intro z
+    constructor
+    · -- Dirección ->
+      intro h_z_in_difference
+      have h_difference := Difference_is_specified x y z
+      have h_both := h_difference.mp h_z_in_difference
+      have h_z_in_x : z ∈ x := h_both.1
+      have h_z_not_in_y : z ∉ y := h_both.2
+      exact h_z_in_x
+    · -- Dirección <-
+      intro h_z_in_x
+      have h_z_not_in_y : z ∉ y := h_disjoint z h_z_in_x
+      exact (Difference_is_specified x y z).mpr ⟨h_z_in_x, h_z_not_in_y⟩
 
   end SpecificationAxiom
 end SetUniverse
 
 export SetUniverse.SpecificationAxiom (
     Specification SpecificationUnique SpecSet SpecSet_is_specified
+    BinIntersection BinIntersection_is_specified BinIntersectionUniqueSet
+    BinIntersection_subset BinIntersection_empty BinIntersection_empty_left_wc
+    BinIntersection_empty_right_wc BinIntersection_commutative
+    BinIntersection_associative BinIntersection_absorbent_elem
+    BinIntersection_with_subseteq BinIntersection_with_subseteq_full
+    BinIntersection_with_empty BinIntersection_idempotence
 )
