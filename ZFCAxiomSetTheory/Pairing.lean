@@ -371,6 +371,7 @@ namespace SetUniverse
       intro hz_eq_x_or_pair
       exact (PairSet_is_specified { x } { x , y } z).mpr hz_eq_x_or_pair
 
+
   theorem OrderedPair_unique  {z : U} (x y : U) (hz_ordered_pair : ∀ (w : U), w ∈ z ↔ (w = { x } ∨ w = { x , y })) :
     z = ⟨ x, y ⟩
       := by
@@ -384,11 +385,13 @@ namespace SetUniverse
       intro hw_in_ordered_pair
       exact (hz_ordered_pair w).mpr ((OrderedPair_is_specified x y w).mp hw_in_ordered_pair)
 
+
   noncomputable def fst (w : U) : U :=
     if h : ∃ (z : U), z ∈ (⋂ w) then
       choose h
     else
       EmptySet
+
 
   noncomputable def snd (w : U) : U :=
     if h : ∃ (z : U), z ∈ ( ( w \ { ( ⋂ w ) } ) \ ( ⋂ w ) ) then
@@ -398,6 +401,7 @@ namespace SetUniverse
         choose h
       else
         EmptySet
+
 
   /-! ### Teorema de que fst y snd son miembros del par ordenado w = ⟨ x, y ⟩ ### -/
   theorem fst_in_ordered_pair (w : U) (x : U) {y : U} (hw : w = ⟨x, y⟩) : {fst w} ∈ w := by sorry

@@ -1,1 +1,5 @@
 /.lake
+/.vscode
+/txtcopies
+.txt
+/txtcopies/*.txt
