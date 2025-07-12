@@ -1,12 +1,13 @@
 import Mathlib.Logic.ExistsUnique
 import Init.Classical
 import Mathlib.Tactic
-import ZFCAxiomSetTheory.Basic
+import ZFCAxiomSetTheory.Extension
 import ZFCAxiomSetTheory.Existence
 import ZFCAxiomSetTheory.Specification
 
 namespace SetUniverse
   open Classical
+  open SetUniverse.ExtensionAxiom
   open SetUniverse.ExistenceAxiom
   open SetUniverse.SpecificationAxiom
   universe u
@@ -387,20 +388,69 @@ namespace SetUniverse
 
 
   noncomputable def fst (w : U) : U :=
-    if h : ∃ (z : U), z ∈ (⋂ w) then
-      choose h
-    else
-      EmptySet
-
-
-  noncomputable def snd (w : U) : U :=
-    if h : ∃ (z : U), z ∈ ( ( w \ { ( ⋂ w ) } ) \ ( ⋂ w ) ) then
-      choose (choose_spec h).2
-    else
+    if ∃ (t : U), t ∈ w then
       if h : ∃ (z : U), z ∈ (⋂ w) then
         choose h
       else
-        EmptySet
+        (∅ : U)
+    else
+      (∅ : U)
+
+  noncomputable def snd (w : U) : U := sorry -- TODO: Implement snd
+    -- if h: ∃ (z : U), z ∈ w then
+    --   let s : U := w \ { (⋂ w) }
+    --   if h: s = ∅ then
+    --     fst w
+    --   else
+    --     let h_exists : ∃ (z : U), z ∈ s := by
+    --       by_contra h_not_exists
+    --       push_neg at h_not_exists
+    --       have h_empty : s = (∅ : U) := by
+    --         apply ExtSet
+    --         intro z
+    --         constructor
+    --         · intro hz_in_s
+    --           exfalso
+    --           exact h_not_exists z hz_in_s
+    --         · intro hz_in_empty
+    --           exfalso
+    --           exact EmptySet_is_empty z hz_in_empty
+    --       exact h h_empty
+    --     have h_intersection : (⋂ w) ≠ ∅ := by
+    --       intro h_empty
+    --       have h_spec := choose_spec h_exists
+    --       have hz_in_s : choose h_exists ∈ s := h_spec
+    --       unfold s at hz_in_s
+    --       have hz_in_w := (Difference_is_specified w {⋂ w} (choose h_exists)).mp hz_in_s
+    --       have hz_in_w_mem := hz_in_w.left
+    --       by_contra h_not_exists
+    --       have h_w_empty : w = (∅: U) := by
+    --         apply ExtSet
+    --         intro y
+    --         constructor
+    --         · intro hy_in_w
+    --           exfalso
+    --           exact (h_not_exists y) hy_in_w
+    --         · intro hy_in_empty
+    --           exfalso
+    --           exact EmptySet_is_empty y hy_in_empty
+    --       rw [h_w_empty] at hz_in_w_mem
+    --       exact EmptySet_is_empty (choose h_exists) hz_in_w_mem
+    --     let z : U := choose h_exists
+    --     let t : U := z \ (⋂ w)
+    --     let h_t_nonempty : t ≠ ∅ := by
+    --       intro h_empty
+    --       have h_spec := choose_spec h_exists
+    --       have hz_in_intersection : z ∈ (⋂ w) := h_spec.1 z
+    --       have hz_in_t : z ∈ t := by
+    --         unfold t
+    --         rw [h_empty]
+    --         exact EmptySet_is_empty z hz_in_intersection
+    --       exact h_intersection hz_in_t
+    --     exact h_t_nonempty
+    --     choose ( ∃ (z : U), z ∈ t )
+    -- else
+    --   ( ∅ : U )
 
 
   /-! ### Teorema de que fst y snd son miembros del par ordenado w = ⟨ x, y ⟩ ### -/
@@ -481,5 +531,54 @@ export SetUniverse.PairingAxiom (
   fst w = choose (∃ (z : U), z ∈ (⋂ w))
   snd w = choose (∃ (z : U), z ∈ ( ( w \ { ⋂ w } ) \ (⋂ w) ) )
 
-  casos
+  w = ⟨ x, y ⟩ = { { x } , { x , y } }
+  fst w  -- No interfiere si x = y o si x ≠ y
+    ⋂ w = { x } ∩ { x, y } = { x }
+    ∃! (z: U), z ∈ ⋂ w ↔ z = x
+    ∃! (z: U), z ∈ { x } ↔ z = x
+
+  w = { }
+  { x } = ∅ !!!
+  { x , y } = ∅ !!!
+
+  snd w
+    -- caso x ≠ y
+    ⋂ w = { x } ∩ { x, y } = { x }
+    {⋂ w} ={ { x } }
+    s = w \ { ⋂ w } = { { x }, { x  , y } } \ { { x } } =
+      = { { x  , y } }
+    z = choose ( ∃ (z : U), z ∈ s )
+    z == { x , y }
+    t = z \ ⋂ w
+    t == { x , y } \ { x } == { y }
+    snd w = choose ( ∃ (z : U), z ∈ t )
+    -- caso x = y
+    ⋂ w = { x } ∩ { x, x } = { x }
+    {⋂ w} ={ { x } }
+    s = w \ { ⋂ w } = { { x }, { x  , x } } \ { { x } } =
+      = { { x } } \ { { x } } = ∅
+    snd w = s
+
+    -- en general
+    -- ⋂ w = { x } ∩ { x, y } = { x }
+    -- {⋂ w} ={ { x } }
+    -- s = w \ { ⋂ w } = { { x }, { x  , y } } \ { { x } } =
+    --   = { { x  , y } }
+    let s : U := w \ { (⋂ w) }
+    if h: s = ∅ then
+      ∅
+    else
+      let z : U := choose ( ∃ (z : U), z ∈ s )
+      -- z == { x , y }
+      let t : U := z \ (⋂ w)
+      -- t == { x , y } \ { x } == { y }
+      choose ( ∃ (z : U), z ∈ t )
+
+    let s : U := w \ { (⋂ w) }
+    if h: s = ∅ then
+      ∅
+    else
+      let z : U := choose ( ∃ (z : U), z ∈ s )
+      let t : U := z \ (⋂ w)
+      choose ( ∃ (z : U), z ∈ t )
 -/

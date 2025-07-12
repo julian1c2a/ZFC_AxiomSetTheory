@@ -1,16 +1,18 @@
 import Mathlib.Logic.ExistsUnique
 import Init.Classical
 import Mathlib.Tactic
-import ZFCAxiomSetTheory.Basic
+import ZFCAxiomSetTheory.Extension
 import ZFCAxiomSetTheory.Existence
 
 namespace SetUniverse
   open Classical
   open SetUniverse.ExistenceAxiom
+  open SetUniverse.ExtensionAxiom
   universe u
   variable {U : Type u}
 
   namespace SpecificationAxiom
+
 
   /-! ### Axioma de Especificación, Separación o Comprehensión ### -/
   /-! ### Specification : existe algún conjunto en el universo U que cumple que es subconjunto de otro y que cumple la proposición P ### -/
