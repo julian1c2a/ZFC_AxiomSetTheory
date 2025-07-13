@@ -386,9 +386,135 @@ namespace SetUniverse
       intro hw_in_ordered_pair
       exact (hz_ordered_pair w).mpr ((OrderedPair_is_specified x y w).mp hw_in_ordered_pair)
 
+  lemma nonempty_iff_exists_mem (w : U) : w ≠ ∅ ↔ ∃ y, y ∈ w := by
+    constructor
+    · intro h_nonempty
+      by_contra h_not_exists
+      push_neg at h_not_exists
+      have h_empty : w = ∅ := by
+        apply ExtSet
+        intro y
+        constructor
+        · intro hy_in_w
+          exfalso
+          exact h_not_exists y hy_in_w
+        · intro hy_in_empty
+          exfalso
+          exact EmptySet_is_empty y hy_in_empty
+      exact h_nonempty h_empty
+    · intro h_exists
+      intro h_empty
+      rcases h_exists with ⟨y, hy_in_w⟩
+      rw [h_empty] at hy_in_w
+      exact EmptySet_is_empty y hy_in_w
+
+  /-! ### Función que dice (`Prop`) si un conjunto `w` tiene un solo elemento ### -/
+  def isSingleton (w : U) : Prop :=
+    if h : ∀ (x : U), x ∉ w then
+      False -- El conjunto vacío no es un singleton
+            -- El vacío no tiene elementos (0)
+    else
+      have h_exists : ∃ t, t ∈ w := by push_neg at h; exact h
+      let v : U := choose h_exists
+      let y : U := w \ ({ v } : U)
+      if ∃ (t : U), t ∈ y then
+        False  -- Caso que más de un solo elemento
+      else
+        True   -- Caso que tiene un solo elemento (par diagonal o singleton)
+
+  /-! ### Función que dice (`Prop`) si un conjunto `w` tiene dos elementos ### -/
+  def isPairOfElements (w : U) : Prop :=
+    if h : ∀ (x : U), x ∉ w then
+      False -- El vacío no tiene elementos (0)
+    else
+      have h_exists : ∃ t, t ∈ w := by push_neg at h; exact h
+      let v : U := choose h_exists
+      let y : U := w \ ({ v } : U)
+      if h_y_nonempty : ∃ (t : U), t ∈ y then
+        let s : U := choose h_y_nonempty
+        let z : U := y \ {s}
+        if h_z_nonempty : ∃ (t : U), t ∈ z then
+          False -- Caso que más de dos elementos
+        else
+          True -- Caso que tiene dos elementos (no necesariamente par ordenado)
+      else
+        False -- Caso que tiene un solo elemento (singleton no necesariamente par diagonal)
+
+  /-! ### Función que dice (`Prop`) si un conjunto `w` es un par ordenado diagonal ### -/
+  def isDiagonalOrderedPair (w : U) : Prop :=
+    if h : ∀ (x : U), x ∉ w then
+      False -- El vacío no tiene elementos (0)
+    else
+      if h_single : isSingleton w then
+        let v : U := choose (by push_neg at h; exact h)
+        (isSingleton v)
+      else
+        False
+
+  /-! ### Función que dice (`Prop`) si un conjunto `w` es un par ordenado no diagonal ### -/
+  def isNonDiagonalOrderedPair (w : U) : Prop :=
+    if ∀ (x : U), x ∉ w then
+      False -- El vacío no tiene elementos (0)
+    else
+      if isDiagonalOrderedPair w then
+        False -- Caso que es un par ordenado diagonal
+      else
+        if isPairOfElements w then
+          let v : U := {(⋂ w)}
+          let z : U := w \ v
+          if ∃ (t : U), t ∈ v then
+            if ∃ (t : U), t ∈ z then
+              if v ⊂ z then
+                isSingleton (z \ v)
+              else if z ⊂ v then
+                isSingleton (v \ z)
+              else
+                False
+          else
+            False -- Si la intersección es vacía no puede ser un par ordenado
+        else
+          False -- Caso que no son dos elementos (no es un par ordenado)
+      else
+        False -- Caso que no es un par ordenado (no es un par ordenado diagonal o no diagonal)
+
+  /-! ### Función que dice (`Prop`) si un conjunto `w` es un par ordenado ### -/
+  def isOrderedPair (w : U) : Prop :=
+    isDiagonalOrderedPair w ∨ isNonDiagonalOrderedPair w
+
+  /-! ### Teorema de que un par ordenado es un conjunto no vacío ### -/
+  theorem OrderedPair_is_nonempty (x y : U) :
+    ⟨ x, y ⟩  ≠ (∅: U)
+      := by
+    intro h_empty
+    have h_ordered_pair : ⟨ x, y ⟩ = { { x } , { x , y } } := rfl
+    have h_singleton_x_in_pair : (({ x }): U) ∈ ( (⟨ x , y ⟩): U ) := by
+      rw [h_ordered_pair]
+      exact (PairSet_is_specified {x} {x, y} {x}).mpr (Or.inl rfl)
+    rw [h_empty] at h_singleton_x_in_pair
+    exfalso
+    exact EmptySet_is_empty {x} h_singleton_x_in_pair
+
+  theorem IntersectionOrderedPair_is_nonempty (x y : U) :
+    (⋂ (⟨ x , y ⟩)) ≠ (∅: U)
+      := by
+    intro h_empty
+    have h_ordered_pair : (⟨ x , y ⟩) = { { x } , { x , y } } := rfl
+    have h_singleton_x_in_pair : {x} ∈ ((⟨ x , y ⟩): U) := by
+      rw [h_ordered_pair]
+      exact (PairSet_is_specified {x} {x, y} {x}).mpr (Or.inl rfl)
+    have h_intersection : (⋂ (⟨ x , y ⟩)) = {x} := by
+      rw [h_ordered_pair, Intersection_of_pair]
+      apply ExtSet
+      intro z
+      rw [BinIntersection_is_specified, Singleton_is_specified, PairSet_is_specified]
+      tauto
+    rw [h_intersection] at h_empty
+    have h_singleton_nonempty := PairSet_singleton_is_nonempty x
+    exact h_singleton_nonempty h_empty
+
 
   noncomputable def fst (w : U) : U :=
-    if ∃ (t : U), t ∈ w then
+    if isOrderedPair w then
       if h : ∃ (z : U), z ∈ (⋂ w) then
         choose h
       else
@@ -396,61 +522,28 @@ namespace SetUniverse
     else
       (∅ : U)
 
-  noncomputable def snd (w : U) : U := sorry -- TODO: Implement snd
-    -- if h: ∃ (z : U), z ∈ w then
-    --   let s : U := w \ { (⋂ w) }
-    --   if h: s = ∅ then
-    --     fst w
-    --   else
-    --     let h_exists : ∃ (z : U), z ∈ s := by
-    --       by_contra h_not_exists
-    --       push_neg at h_not_exists
-    --       have h_empty : s = (∅ : U) := by
-    --         apply ExtSet
-    --         intro z
-    --         constructor
-    --         · intro hz_in_s
-    --           exfalso
-    --           exact h_not_exists z hz_in_s
-    --         · intro hz_in_empty
-    --           exfalso
-    --           exact EmptySet_is_empty z hz_in_empty
-    --       exact h h_empty
-    --     have h_intersection : (⋂ w) ≠ ∅ := by
-    --       intro h_empty
-    --       have h_spec := choose_spec h_exists
-    --       have hz_in_s : choose h_exists ∈ s := h_spec
-    --       unfold s at hz_in_s
-    --       have hz_in_w := (Difference_is_specified w {⋂ w} (choose h_exists)).mp hz_in_s
-    --       have hz_in_w_mem := hz_in_w.left
-    --       by_contra h_not_exists
-    --       have h_w_empty : w = (∅: U) := by
-    --         apply ExtSet
-    --         intro y
-    --         constructor
-    --         · intro hy_in_w
-    --           exfalso
-    --           exact (h_not_exists y) hy_in_w
-    --         · intro hy_in_empty
-    --           exfalso
-    --           exact EmptySet_is_empty y hy_in_empty
-    --       rw [h_w_empty] at hz_in_w_mem
-    --       exact EmptySet_is_empty (choose h_exists) hz_in_w_mem
-    --     let z : U := choose h_exists
-    --     let t : U := z \ (⋂ w)
-    --     let h_t_nonempty : t ≠ ∅ := by
-    --       intro h_empty
-    --       have h_spec := choose_spec h_exists
-    --       have hz_in_intersection : z ∈ (⋂ w) := h_spec.1 z
-    --       have hz_in_t : z ∈ t := by
-    --         unfold t
-    --         rw [h_empty]
-    --         exact EmptySet_is_empty z hz_in_intersection
-    --       exact h_intersection hz_in_t
-    --     exact h_t_nonempty
-    --     choose ( ∃ (z : U), z ∈ t )
-    -- else
-    --   ( ∅ : U )
+  noncomputable def snd (w : U) : U :=
+    if isDiagonalOrderedPair w then
+      ⋂ w
+    else if isNonDiagonalOrderedPair w then
+      if h : ∃ (z : U), z ∈ (w \ (⋂ w)) then
+        let v : U := {choose h}
+        let s : U := w\v
+        have h_s_nonempty : s ≠ ∅ := by
+          intro h_empty
+          have h := choose_spec h
+          have h_s_in_w : choose h ∈ w := h.left
+          have h_s_empty : choose h ∈ s := h_empty ▸ h_s_in_w
+          exact EmptySet_is_empty (choose h) h_s_empty
+          exact h_s_nonempty h_empty
+        let y : U := choose (by
+          use choose h
+          exact h_s_nonempty)
+        sorry
+      else
+        (∅ : U)
+    else
+      (∅ : U)
 
 
   /-! ### Teorema de que fst y snd son miembros del par ordenado w = ⟨ x, y ⟩ ### -/
