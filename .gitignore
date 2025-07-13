@@ -1,3 +1,6 @@
+/nppBackup
+/nppBackup/*
+.bak
 /.github
 /.lake
 /.vscode
