@@ -564,6 +564,11 @@ export SetUniverse.PairingAxiom (
     Intersection_unique_set Intersection_subset
     OrderedPair OrderedPair_is_specified OrderedPair_unique
     fst snd
+    OrderedPairSet_is_specified OrderedPairSet_unique
+    OrderedPairSet_is_WellConstructed
+    Intersection_of_pair Intersection_of_singleton
+    Intersection_subset_of_superset
+    Intersection_empty_if_empty
 )
 
 /-
