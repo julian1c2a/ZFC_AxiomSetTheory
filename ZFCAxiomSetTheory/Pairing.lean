@@ -351,7 +351,7 @@ namespace SetUniverse
         (h_spec.mp hy_in_singleton) ▸ hz_in_A⟩
 
   /-! ### Definición del Par Ordenado (x,y) = { { x } , { x , y } } ### -/
-  noncomputable def OrderedPair (x y : U) : U := { { x } , { x , y } }
+  noncomputable def OrderedPair (x y : U) : U := (({ (({ x }): U) , (({ x , y }): U) }): U)
 
   /-! ### Notación estándar del Par Ordenado (x,y) = { { x } , { x , y } } ### -/
   notation " ⟨ " x ", " y " ⟩ " => OrderedPair x y
@@ -371,7 +371,6 @@ namespace SetUniverse
     · -- Dirección <-
       intro hz_eq_x_or_pair
       exact (PairSet_is_specified { x } { x , y } z).mpr hz_eq_x_or_pair
-
 
   theorem OrderedPair_unique  {z : U} (x y : U) (hz_ordered_pair : ∀ (w : U), w ∈ z ↔ (w = { x } ∨ w = { x , y })) :
     z = ⟨ x, y ⟩
@@ -512,11 +511,10 @@ namespace SetUniverse
     have h_singleton_nonempty := PairSet_singleton_is_nonempty x
     exact h_singleton_nonempty h_empty
 
-
   noncomputable def fst (w : U) : U :=
     if isOrderedPair w then
-      if h : ∃ (z : U), z ∈ (⋂ w) then
-        choose h
+      if ∃ (z : U), z ∈ (⋂ w) then
+        (⋂ (⋂ w))
       else
         (∅ : U)
     else
@@ -524,85 +522,35 @@ namespace SetUniverse
 
   noncomputable def snd (w : U) : U :=
     if isDiagonalOrderedPair w then
-      ⋂ w
+      (⋂ (⋂ w)) -- w = ⟨ x, x ⟩ = { { x } , { x , x } } , ⋂ w = { x }
+                 -- evalua a y = x = ⋂ ⋂ w
     else if isNonDiagonalOrderedPair w then
-      if h : ∃ (z : U), z ∈ (w \ (⋂ w)) then
-        let v : U := {choose h}
-        let s : U := w\v
-        have h_s_nonempty : s ≠ ∅ := by
-          intro h_empty
-          have h := choose_spec h
-          have h_s_in_w : choose h ∈ w := h.left
-          have h_s_empty : choose h ∈ s := h_empty ▸ h_s_in_w
-          exact EmptySet_is_empty (choose h) h_s_empty
-          exact h_s_nonempty h_empty
-        let y : U := choose (by
-          use choose h
-          exact h_s_nonempty)
-        sorry
-      else
-        (∅ : U)
+      -- w = ⟨ x, y ⟩ = { { x } , { x , y } } , x ≠ y
+      let v₀ := (⋂ w) -- v₀ = { x }
+      let v : U := { v₀ } -- v = { { x } }
+      let s : U := (w \ v) -- s = { { x , y } }
+      let s₀ : U := (⋂ s) -- s₀ = { x , y }
+      let r₀ : U := (s₀ \ v₀) -- r₀ = { y }
+      let r₁ : U := (⋂ r₀) -- r₁ = y
+      r₁ -- evalua a y
     else
       (∅ : U)
 
+  theorem OrderedPairSet_is_specified (x y : U) :
+    ∀ (z : U), z ∈ (⟨ x , y ⟩: U) ↔ (z = ({ x }: U) ∨ z = ({ x , y }: U))
+      := by
+    intro z
+    exact OrderedPair_is_specified x y z
 
-  /-! ### Teorema de que fst y snd son miembros del par ordenado w = ⟨ x, y ⟩ ### -/
-  theorem fst_in_ordered_pair (w : U) (x : U) {y : U} (hw : w = ⟨x, y⟩) : {fst w} ∈ w := by sorry
-    -- unfold fst
-    -- have h_nonempty : w ≠ ∅ := by
-    --   rw [hw]
-    --   exact PairSet_is_nonempty {x} {x, y}
-    -- by_cases h_exists : ∃ (z : U), z ∈ (⋂ w)
-    -- · -- Caso en que existe un elemento en la intersección de w
-    --   simp only [dif_pos h_exists]
-    --   have h := choose_spec h_exists
-    --   -- h : choose h_exists ∈ ⋂ w
-    --   have h_intersection : ⋂ w = { x } := by
-    --     rw [hw]
-    --     unfold OrderedPair
-    --     rw [Intersection_of_pair]
-    --     apply ExtSet
-    --     intro z
-    --     constructor
-    --     · intro hz_in_inter
-    --       have h_spec := BinIntersection_is_specified {x} {x, y} z
-    --       have hz_in_both := h_spec.mp hz_in_inter
-    --       exact hz_in_both.1
-    --     · intro hz_in_singleton
-    --       have h_spec := BinIntersection_is_specified {x} {x, y} z
-    --       have hz_in_x := Singleton_is_specified x z
-    --       have hz_eq_x := hz_in_x.mp hz_in_singleton
-    --       have hz_in_pair := PairSet_is_specified x y z
-    --       exact h_spec.mpr ⟨hz_in_singleton, hz_in_pair.mpr (Or.inl hz_eq_x)⟩
-    --   rw [h_intersection] at h
-    --   have h_x_in_singleton : x ∈ {x} := Singleton_is_specified x x |>.mpr rfl
-    --   have h_choose_eq_x : choose h_exists = x := Singleton_is_specified x (choose h_exists) |>.mp h
-    --   rw [h_choose_eq_x, hw]
-    --   exact PairSet_is_specified {x} {x, y} {x} |>.mpr (Or.inl rfl)
-    -- · -- Caso en que no existe un elemento en la intersección de w
-    --   simp only [dif_neg h_exists]
-    --   rw [hw]
-    --   unfold OrderedPair
-    --   have h_intersection : (⋂ ({ ({ x }) , ({ x , y }) }))  = ({ x }) := by
-    --     rw [Intersection_of_pair]
-    --     apply ExtSet
-    --     intro z
-    --     constructor
-    --     · intro hz_in_inter
-    --       have h_spec := BinIntersection_is_specified {x} {x, y} z
-    --       have hz_in_both := h_spec.mp hz_in_inter
-    --       exact hz_in_both.1
-    --     · intro hz_in_singleton
-    --       have h_spec := BinIntersection_is_specified {x} {x, y} z
-    --       have hz_in_x := Singleton_is_specified x z
-    --       have hz_eq_x := hz_in_x.mp hz_in_singleton
-    --       have hz_in_pair := PairSet_is_specified x y z
-    --       exact h_spec.mpr ⟨hz_in_singleton, hz_in_pair.mpr (Or.inl hz_eq_x)⟩
-    --   have h_x_exists : ∃ (z : U), z ∈ (⋂ { { x } , { x , y } }) := by
-    --     use x
-    --     rw [h_intersection]
-    --     exact Singleton_is_specified x x |>.mpr rfl
-    --   exact absurd h_x_exists h_exists
+  theorem OrderedPairSet_unique (x y : U) (z : U)
+    (hz_ordered_pair : ∀ (w : U), w ∈ z ↔ (w = ({ x }: U) ∨ w = ({ x , y }: U))) :
+    z = ⟨ x, y ⟩
+      := by
+    apply OrderedPair_unique x y hz_ordered_pair
+
+  theorem OrderedPairSet_is_WellConstructed (w : U) :
+    (isOrderedPair w) → w = (⟨ fst w, snd w ⟩ : U)
+      := by sorry
 
   end PairingAxiom
 end SetUniverse
