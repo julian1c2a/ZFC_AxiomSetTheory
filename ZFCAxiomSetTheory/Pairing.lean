@@ -511,31 +511,20 @@ namespace SetUniverse
     have h_singleton_nonempty := PairSet_singleton_is_nonempty x
     exact h_singleton_nonempty h_empty
 
-  noncomputable def fst (w : U) : U :=
-    if isOrderedPair w then
-      if ∃ (z : U), z ∈ (⋂ w) then
-        (⋂ (⋂ w))
-      else
-        (∅ : U)
-    else
-      (∅ : U)
+  noncomputable def fst (w : U) : U := (⋂ (⋂ w))
 
   noncomputable def snd (w : U) : U :=
-    if isDiagonalOrderedPair w then
-      (⋂ (⋂ w)) -- w = ⟨ x, x ⟩ = { { x } , { x , x } } , ⋂ w = { x }
-                 -- evalua a y = x = ⋂ ⋂ w
-    else if isNonDiagonalOrderedPair w then
-      -- w = ⟨ x, y ⟩ = { { x } , { x , y } } , x ≠ y
-      let v₀ := (⋂ w) -- v₀ = { x }
-      let v : U := { v₀ } -- v = { { x } }
-      let s : U := (w \ v) -- s = { { x , y } }
-      let s₀ : U := (⋂ s) -- s₀ = { x , y }
-      let r₀ : U := (s₀ \ v₀) -- r₀ = { y }
-      let r₁ : U := (⋂ r₀) -- r₁ = y
-      r₁ -- evalua a y
-         -- y = (⋂ ((⋂ (w \ {(⋂ w)})) \ (⋂ w)))
+    let v₀ : U := (⋂ w) -- v₀ = { x }
+    let v : U := { v₀ } -- v = { { x } }
+    let s : U := (w \ v) -- s = { { x , y } }
+    let s₀ : U := (⋂ s) -- s₀ = { x , y }
+    let r₀ : U := (s₀ \ v₀) -- r₀ = { y }
+    let r₁ : U := (⋂ r₀)  -- r₁ = y
+                          -- evalua a y = (⋂ ((⋂ (w \ {(⋂ w)})) \ (⋂ w))) -- w = ⟨ x, y ⟩ = { { x } , { x , y } } , x ≠ y
+    if r₁ = (∅ : U) then
+      ⋂ v₀ -- evalua a x = (⋂ (⋂ w)) -- w = ⟨ x, y ⟩ = { { x } , { x , y } } , x ≠ y
     else
-      (∅ : U)
+      r₁ -- evalua a y
 
   theorem OrderedPairSet_is_specified (x y : U) :
     ∀ (z : U), z ∈ (⟨ x , y ⟩: U) ↔ (z = ({ x }: U) ∨ z = ({ x , y }: U))
@@ -550,6 +539,86 @@ namespace SetUniverse
     apply OrderedPair_unique x y hz_ordered_pair
 
   /-! ### Necesitamos unos cuantos lemas para usar en el teroema principal. ### TO DO -/ -- TO DO
+  theorem OrderedPair_function_return_isOrderedPair_x_eq_y (x y : U) (h_eq : x =  y) :
+    isOrderedPair (⟨ x , y ⟩ : U)
+      := by
+    -- Aquí, simplemente usamos la definición de isOrderedPair.
+    unfold isOrderedPair
+    -- Si x = y, entonces es un par ordenado diagonal.
+    left
+    unfold isDiagonalOrderedPair
+    -- Aquí, simplemente usamos la definición de isDiagonalOrderedPair.
+    unfold isSingleton
+    -- Si x = y, entonces {x} es un singleton.
+    unfold Singleton
+    rw [h_eq]
+    -- Ahora, {x} es un singleton, por lo que isSingleton {x} es verdadero.
+    dsimp [isSingleton]
+    by_cases h_empty : ∀ (x : U), x ∉ ({x} : U)
+    · -- Caso: {x} es vacío, lo cual es falso porque x ∈ {x}
+      exfalso
+      have hx : x ∈ ({x}: U) := (PairSet_is_specified x x x).mpr (Or.inl rfl)
+      exact h_empty x hx
+    · -- Caso: {x} no es vacío, y no hay más elementos además de x
+      -- Ahora, ({x} \ {x}) = ∅, así que no existe t ∈ ({x} \ {x})
+      by_cases h_exists : ∃ (t : U), t ∈ ({x} \ {x} : U)
+      · -- Caso: existe t ∈ ({x} \ {x}), pero esto es falso
+        exfalso
+        rcases h_exists with ⟨t, ht⟩
+        -- ht : t ∈ ({x} \ {x}), i.e., t ∈ {x} ∧ t ∉ {x}
+        -- t ∈ ({x}: U) means t = x, so use the equality from the context
+        have ht_in_singleton := (Difference_is_specified {x} {x} t).mp ht
+        have t_eq_x := (Singleton_is_specified x t).mp ht_in_singleton.1
+        have h₁ : t ∈ ({x}: U) := (PairSet_is_specified x x t).mpr (Or.inl t_eq_x)
+        exact ht_in_singleton.2 h₁
+      · -- Caso: no existe t ∈ ({x} \ {x}), por lo tanto True
+        -- Demostramos que ambos lados son True, porque no existe t ∈ ({x} \ {x})
+        dsimp [isSingleton]
+        have h_empty : (({x} : U) \ ({x} : U)) = (∅ : U) := Difference_self_empty ({x} : U)
+        have h_exists : ¬∃ (t : U), t ∈ (({x} \ {x}): U) := by
+          intro h_exists
+          rcases h_exists with ⟨t, ht⟩
+          -- ht : t ∈ ({x} \ {x}), i.e., t ∈ {x} ∧ t ∉ {x}
+          -- t ∈ ({x}: U) means t = x, so use the equality from the context
+          have ht_in_singleton := (Difference_is_specified {x} {x} t).mp ht
+          have t_eq_x := (Singleton_is_specified x t).mp ht_in_singleton.1
+          have h₁ : t ∈ ({x}: U) := (PairSet_is_specified x x t).mpr (Or.inl t_eq_x)
+          exact ht_in_singleton.2 h₁
+        -- Sustituimos { x } \ { x } por (∅ : U) en la definición de isSingleton
+        unfold isSingleton at h_exists
+        unfold isSingleton at h_empty
+        -- Ahora, isSingleton { x } es verdadero porque no hay elementos en { x } \ { x }
+        exact h_exists h_empty
+    -- Ahora, isOrderedPair ⟨x, y⟩ es verdadero porque es un par ordenado diagonal.
+    unfold isOrderedPair
+
+
+
+  theorem OrderedPair_function_return_isOrderedPair_x_ne_y (x y : U) (h_ne : x ≠ y) :
+    isOrderedPair (⟨ x , y ⟩ : U)
+      := by
+    -- Aquí, simplemente usamos la definición de isOrderedPair.
+    unfold isOrderedPair
+    -- Si x ≠ y, entonces es un par ordenado no diagonal.
+    right
+    unfold isNonDiagonalOrderedPair
+    -- Aquí, simplemente usamos la definición de isNonDiagonalOrderedPair.
+    unfold isPairOfElements
+    -- Si x ≠ y, entonces {x} y {x, y} son dos elementos.
+    -- No se puede unfold PairSet porque es noncomputable, usamos su especificación.
+    -- Usar PairSet_is_specified para razonar sobre los elementos de {x, y}.
+    -- Ahora, {x} y {x, y} son dos elementos, por lo que isPairOfElements es verdadero.
+    unfold isPairOfElements
+
+    theorem OrderedPair_function_return_isOrderedPair (x y : U):
+      isOrderedPair (⟨ x , y ⟩ : U)
+        := by
+      -- Por casos (h_eq: x=y) o (h_ne: x≠y).
+      by_cases h_eq : x = y
+      · -- Caso x = y
+        exact OrderedPair_function_return_isOrderedPair_x_eq_y x y h_eq
+      · -- Caso x ≠ y
+        exact OrderedPair_function_return_isOrderedPair_x_ne_y x y h_ne
 
   -- Demostración de que fst recupera el primer elemento.
   theorem fst_of_ordered_pair (x y : U) : fst ⟨x, y⟩ = x :=
