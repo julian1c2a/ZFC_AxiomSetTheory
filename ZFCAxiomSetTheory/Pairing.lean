@@ -565,7 +565,7 @@ namespace SetUniverse
     apply OrderedPair_unique x y hz_ordered_pair
 
   /-! ### Necesitamos unos cuantos lemas para usar en el teroema principal. ### TO DO -/ -- TO DO
-  theorem OrderedPair_function_return_isOrderedPair_x_eq_y (x y : U) (h_eq : x =  y) :
+  theorem OrderedPair_function_return_isOrderedPair_x_eq_y (x y : U) (h_eq : x = y) :
     isOrderedPair (⟨ x , y ⟩ : U)
       := by sorry
 
@@ -597,6 +597,67 @@ namespace SetUniverse
     (isOrderedPair w) → w = (⟨ fst w, snd w ⟩ : U) :=
     by sorry
 
+  /-! ### Relaciones y Funciones: Inyectividad, Sobreyectividad, Equivalencia y Orden ### -/
+
+  noncomputable def isRelation (w : U) : Prop :=
+    ∀ (z : U), (z ∈ w) ↔ (isOrderedPair_concept z)
+
+  noncomputable def isRelation_in_Sets (A B R : U) : Prop :=
+    ∀ (z : U), z ∈ R → ∃ (x y : U), z = ⟨ x , y ⟩ → x ∈ A ∧ y ∈ B
+
+  noncomputable def domain (R : U) : U :=
+    SpecSet (fst R) (fun x => ∃ y, ⟨ x , y ⟩ ∈ R)
+
+  noncomputable def range (R : U) : U :=
+    SpecSet (snd R) (fun y => ∃ x, ⟨ x , y ⟩ ∈ R)
+
+  noncomputable def isReflexive (w : U) : Prop :=
+    ∃ (x y : U), ⟨ x , y ⟩ ∈ w → ⟨ x , x ⟩ ∈ w
+
+  noncomputable def isReflexive_in_Set ( A R : U ) : Prop :=
+    ∃ (x : U), x ∈ A → ⟨ x , x ⟩ ∈ R
+
+  noncomputable def isIReflexive (w : U) : Prop :=
+    ∀ (x : U), ⟨ x , x ⟩ ∉ w
+
+  noncomputable def isSymmetric (w : U) : Prop :=
+    ∀ (x y : U), ⟨ x , y ⟩ ∈ w → ⟨ y , x ⟩ ∈ w
+
+  noncomputable def isAsymmetric (w : U) : Prop :=
+    ∀ (x y : U), ⟨ x , y ⟩ ∈ w → ⟨ y , x ⟩ ∉ w
+
+  noncomputable def isAntiSymmetric (w : U) : Prop :=
+    ∀ (x y : U), ⟨ x , y ⟩ ∈ w → ⟨ y , x ⟩ ∈ w → x = y
+
+  noncomputable def isTransitive (w : U) : Prop :=
+    ∀ (x y z : U), ⟨ x , y ⟩ ∈ w → ⟨ y , z ⟩ ∈ w → ⟨ x , z ⟩ ∈ w
+
+  noncomputable def isEquivalenceRelation (w : U) : Prop :=
+    isReflexive w ∧ isSymmetric w ∧ isTransitive w
+
+  noncomputable def isEquivalenceRelation_in_Set (A R : U) : Prop :=
+    isReflexive_in_Set A R ∧ isSymmetric R ∧ isTransitive R
+
+  noncomputable def isPartialOrder (R : U) : Prop :=
+    isReflexive R ∧ isAntiSymmetric R ∧ isTransitive R
+
+  noncomputable def isStrictOrder (R : U) : Prop :=
+    isAsymmetric R ∧ isTransitive R
+
+  noncomputable def isWellDefined (R : U) : Prop :=
+    ∀ (x y₁ y₂ : U), ⟨ x , y₁ ⟩ ∈ R → ⟨ x , y₂ ⟩ ∈ R → y₁ = y₂
+
+  noncomputable def isFunction (A R : U) : Prop :=
+    ∀ (x : U), x ∈ A → ∃ (y₁ : U), ∀ (y₂ : U), ⟨ x , y₁ ⟩ ∈ R → ⟨ x , y₂ ⟩ ∈ R → y₁ = y₂
+
+  noncomputable def isInyective (R : U) : Prop :=
+    ∀ (x₁ x₂ : U), ∃ (y : U), ⟨ x₁ , y ⟩ ∈ R → ⟨ x₂ , y ⟩ ∈ R → x₁ = x₂
+
+  noncomputable def isSurjectiveFunction (A B R : U) : Prop :=
+    ∀ (y : U), y ∈ B → ∃ (x : U), x ∈ A ∧ ⟨ x , y ⟩ ∈ R
+
+  noncomputable def isBijectiveFunction (A B R : U) : Prop :=
+    isFunction A R ∧ isInyective R ∧ isSurjectiveFunction A B R
 
   end PairingAxiom
 end SetUniverse
@@ -615,6 +676,13 @@ export SetUniverse.PairingAxiom (
     Intersection_of_pair Intersection_of_singleton
     Intersection_subset_of_superset
     Intersection_empty_if_empty
+    isRelation isRelation_in_Sets
+    domain range
+    isReflexive isReflexive_in_Set
+    isIReflexive isSymmetric isAsymmetric isAntiSymmetric
+    isTransitive isEquivalenceRelation isEquivalenceRelation_in_Set
+    isPartialOrder isStrictOrder isWellDefined
+    isFunction isInyective isSurjectiveFunction isBijectiveFunction
 )
 
 /-
