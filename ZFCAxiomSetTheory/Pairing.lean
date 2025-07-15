@@ -565,23 +565,24 @@ namespace SetUniverse
     apply OrderedPair_unique x y hz_ordered_pair
 
   /-! ### Necesitamos unos cuantos lemas para usar en el teroema principal. ### TO DO -/ -- TO DO
-  theorem OrderedPair_function_return_isOrderedPair_x_eq_y (x y : U) (h_eq : x = y) :
-    isOrderedPair (⟨ x , y ⟩ : U)
+  theorem OrderedPair_functRet_isOrderedPair_x_eq_y (x y : U) (h_eq : x = y) :
+    isOrderedPair_concept (⟨ x , y ⟩ : U)
+      := by sorry
+  -- TO DO: Completar la demostración de este teorema.
+
+  theorem OrderedPair_functRet_isOrderedPair_x_ne_y (x y : U) (h_ne : x ≠ y) :
+    isOrderedPair_concept (⟨ x , y ⟩ : U)
       := by sorry
 
-  theorem OrderedPair_function_return_isOrderedPair_x_ne_y (x y : U) (h_ne : x ≠ y) :
-    isOrderedPair (⟨ x , y ⟩ : U)
-      := by sorry
-
-    theorem OrderedPair_function_return_isOrderedPair (x y : U):
-      isOrderedPair (⟨ x , y ⟩ : U)
+    theorem OrderedPair_functRet_isOrderedPair (x y : U):
+      isOrderedPair_concept (⟨ x , y ⟩ : U)
         := by
       -- Por casos (h_eq: x=y) o (h_ne: x≠y).
       by_cases h_eq : x = y
       · -- Caso x = y
-        exact OrderedPair_function_return_isOrderedPair_x_eq_y x y h_eq
+        exact OrderedPair_functRet_isOrderedPair_x_eq_y x y h_eq
       · -- Caso x ≠ y
-        exact OrderedPair_function_return_isOrderedPair_x_ne_y x y h_eq
+        exact OrderedPair_functRet_isOrderedPair_x_ne_y x y h_eq
 
   -- Demostración de que fst recupera el primer elemento.
   theorem fst_of_ordered_pair (x y : U) : fst ⟨x, y⟩ = x :=
