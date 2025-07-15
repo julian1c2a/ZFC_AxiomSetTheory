@@ -84,7 +84,6 @@ namespace SetUniverse
       intro hz_eq_x
       exact (PairSet_is_specified x x z).mpr (Or.inl hz_eq_x)
 
-
   notation " { " x " } " => Singleton x
 
   theorem Singleton_unique (x : U) (z : U) (hz_singleton : ∀ (w : U), w ∈ z ↔ (w = x)) :
@@ -169,7 +168,7 @@ namespace SetUniverse
       have h_exists : ∃ y, y ∈ w := by
         by_contra h_not_exists
         push_neg at h_not_exists
-        have h_empty : w = ∅ := by
+        have h_empty : w = (∅ : U) := by
           apply ExtSet
           intro y
           constructor
@@ -354,7 +353,7 @@ namespace SetUniverse
   noncomputable def OrderedPair (x y : U) : U := (({ (({ x }): U) , (({ x , y }): U) }): U)
 
   /-! ### Notación estándar del Par Ordenado (x,y) = { { x } , { x , y } } ### -/
-  notation " ⟨ " x ", " y " ⟩ " => OrderedPair x y
+  notation " ⟨ " x " , " y " ⟩ " => OrderedPair x y
 
   theorem OrderedPair_is_specified (x y : U) :
     ∀ (z : U), z ∈ OrderedPair x y ↔ (z = { x } ∨ z = { x , y })
@@ -408,6 +407,9 @@ namespace SetUniverse
       exact EmptySet_is_empty y hy_in_w
 
   /-! ### Función que dice (`Prop`) si un conjunto `w` tiene un solo elemento ### -/
+  def isSingleton_concept (w : U) : Prop :=
+    (w ≠ ∅) ∧ (∀ (x : U), x ∈ w → ∀ (y : U), y ∈ w → x = y)
+
   def isSingleton (w : U) : Prop :=
     if h : ∀ (x : U), x ∉ w then
       False -- El conjunto vacío no es un singleton
@@ -416,12 +418,15 @@ namespace SetUniverse
       have h_exists : ∃ t, t ∈ w := by push_neg at h; exact h
       let v : U := choose h_exists
       let y : U := w \ ({ v } : U)
-      if ∃ (t : U), t ∈ y then
+      if v ≠ (∅ : U) then
         False  -- Caso que más de un solo elemento
       else
-        True   -- Caso que tiene un solo elemento (par diagonal o singleton)
+        True   -- Caso que tiene un solo elemento (singleton)
 
   /-! ### Función que dice (`Prop`) si un conjunto `w` tiene dos elementos ### -/
+  def isPairOfElements_concept (w : U) : Prop :=
+    (w ≠ ∅) ∧ (∃ (x y : U), (x ≠ y) ∧ (w = ({ x , y }: U)))
+
   def isPairOfElements (w : U) : Prop :=
     if h : ∀ (x : U), x ∉ w then
       False -- El vacío no tiene elementos (0)
@@ -440,6 +445,15 @@ namespace SetUniverse
         False -- Caso que tiene un solo elemento (singleton no necesariamente par diagonal)
 
   /-! ### Función que dice (`Prop`) si un conjunto `w` es un par ordenado diagonal ### -/
+  def isDiagonalOrderedPair_concept (w : U) : Prop :=
+    (isSingleton_concept w) ∧ (isSingleton_concept (⋂ w))
+
+  def isDiagonalOrderedPair_concept_2 (w : U) : Prop :=
+    ∃ (x : U), w = ({ ({ x }: U) } : U)
+
+  def isDiagonalOrderedPair_concept_3 (w : U) : Prop :=
+    ∃ (x : U), w = ( ⟨ x , x ⟩ : U )
+
   def isDiagonalOrderedPair (w : U) : Prop :=
     if h : ∀ (x : U), x ∉ w then
       False -- El vacío no tiene elementos (0)
@@ -450,7 +464,14 @@ namespace SetUniverse
       else
         False
 
+
   /-! ### Función que dice (`Prop`) si un conjunto `w` es un par ordenado no diagonal ### -/
+  def isNonDiagonalOrderedPair_concept (w : U) : Prop :=
+    ∃ (x y : U), (x ≠ y) ∧ w = ({ ({ x }: U), ({ x , y }: U) }: U)
+
+  def isNonDiagonalOrderedPair_concept_2 (w : U) : Prop :=
+    ∃ (x y : U), (x ≠ y) ∧ w = (⟨ x , y ⟩ : U)
+
   def isNonDiagonalOrderedPair (w : U) : Prop :=
     if ∀ (x : U), x ∉ w then
       False -- El vacío no tiene elementos (0)
@@ -476,7 +497,11 @@ namespace SetUniverse
       else
         False -- Caso que no es un par ordenado (no es un par ordenado diagonal o no diagonal)
 
+
   /-! ### Función que dice (`Prop`) si un conjunto `w` es un par ordenado ### -/
+  def isOrderedPair_concept (w : U) : Prop :=
+    ∃ (x y : U), w = (⟨ x , y ⟩  : U)
+
   def isOrderedPair (w : U) : Prop :=
     isDiagonalOrderedPair w ∨ isNonDiagonalOrderedPair w
 
@@ -511,6 +536,7 @@ namespace SetUniverse
     have h_singleton_nonempty := PairSet_singleton_is_nonempty x
     exact h_singleton_nonempty h_empty
 
+
   noncomputable def fst (w : U) : U := (⋂ (⋂ w))
 
   noncomputable def snd (w : U) : U :=
@@ -541,74 +567,11 @@ namespace SetUniverse
   /-! ### Necesitamos unos cuantos lemas para usar en el teroema principal. ### TO DO -/ -- TO DO
   theorem OrderedPair_function_return_isOrderedPair_x_eq_y (x y : U) (h_eq : x =  y) :
     isOrderedPair (⟨ x , y ⟩ : U)
-      := by
-    -- Aquí, simplemente usamos la definición de isOrderedPair.
-    unfold isOrderedPair
-    -- Si x = y, entonces es un par ordenado diagonal.
-    left
-    unfold isDiagonalOrderedPair
-    -- Aquí, simplemente usamos la definición de isDiagonalOrderedPair.
-    unfold isSingleton
-    -- Si x = y, entonces {x} es un singleton.
-    unfold Singleton
-    rw [h_eq]
-    -- Ahora, {x} es un singleton, por lo que isSingleton {x} es verdadero.
-    dsimp [isSingleton]
-    by_cases h_empty : ∀ (x : U), x ∉ ({x} : U)
-    · -- Caso: {x} es vacío, lo cual es falso porque x ∈ {x}
-      exfalso
-      have hx : x ∈ ({x}: U) := (PairSet_is_specified x x x).mpr (Or.inl rfl)
-      exact h_empty x hx
-    · -- Caso: {x} no es vacío, y no hay más elementos además de x
-      -- Ahora, ({x} \ {x}) = ∅, así que no existe t ∈ ({x} \ {x})
-      by_cases h_exists : ∃ (t : U), t ∈ ({x} \ {x} : U)
-      · -- Caso: existe t ∈ ({x} \ {x}), pero esto es falso
-        exfalso
-        rcases h_exists with ⟨t, ht⟩
-        -- ht : t ∈ ({x} \ {x}), i.e., t ∈ {x} ∧ t ∉ {x}
-        -- t ∈ ({x}: U) means t = x, so use the equality from the context
-        have ht_in_singleton := (Difference_is_specified {x} {x} t).mp ht
-        have t_eq_x := (Singleton_is_specified x t).mp ht_in_singleton.1
-        have h₁ : t ∈ ({x}: U) := (PairSet_is_specified x x t).mpr (Or.inl t_eq_x)
-        exact ht_in_singleton.2 h₁
-      · -- Caso: no existe t ∈ ({x} \ {x}), por lo tanto True
-        -- Demostramos que ambos lados son True, porque no existe t ∈ ({x} \ {x})
-        dsimp [isSingleton]
-        have h_empty : (({x} : U) \ ({x} : U)) = (∅ : U) := Difference_self_empty ({x} : U)
-        have h_exists : ¬∃ (t : U), t ∈ (({x} \ {x}): U) := by
-          intro h_exists
-          rcases h_exists with ⟨t, ht⟩
-          -- ht : t ∈ ({x} \ {x}), i.e., t ∈ {x} ∧ t ∉ {x}
-          -- t ∈ ({x}: U) means t = x, so use the equality from the context
-          have ht_in_singleton := (Difference_is_specified {x} {x} t).mp ht
-          have t_eq_x := (Singleton_is_specified x t).mp ht_in_singleton.1
-          have h₁ : t ∈ ({x}: U) := (PairSet_is_specified x x t).mpr (Or.inl t_eq_x)
-          exact ht_in_singleton.2 h₁
-        -- Sustituimos { x } \ { x } por (∅ : U) en la definición de isSingleton
-        unfold isSingleton at h_exists
-        unfold isSingleton at h_empty
-        -- Ahora, isSingleton { x } es verdadero porque no hay elementos en { x } \ { x }
-        exact h_exists h_empty
-    -- Ahora, isOrderedPair ⟨x, y⟩ es verdadero porque es un par ordenado diagonal.
-    unfold isOrderedPair
-
-
+      := by sorry
 
   theorem OrderedPair_function_return_isOrderedPair_x_ne_y (x y : U) (h_ne : x ≠ y) :
     isOrderedPair (⟨ x , y ⟩ : U)
-      := by
-    -- Aquí, simplemente usamos la definición de isOrderedPair.
-    unfold isOrderedPair
-    -- Si x ≠ y, entonces es un par ordenado no diagonal.
-    right
-    unfold isNonDiagonalOrderedPair
-    -- Aquí, simplemente usamos la definición de isNonDiagonalOrderedPair.
-    unfold isPairOfElements
-    -- Si x ≠ y, entonces {x} y {x, y} son dos elementos.
-    -- No se puede unfold PairSet porque es noncomputable, usamos su especificación.
-    -- Usar PairSet_is_specified para razonar sobre los elementos de {x, y}.
-    -- Ahora, {x} y {x, y} son dos elementos, por lo que isPairOfElements es verdadero.
-    unfold isPairOfElements
+      := by sorry
 
     theorem OrderedPair_function_return_isOrderedPair (x y : U):
       isOrderedPair (⟨ x , y ⟩ : U)
@@ -618,103 +581,22 @@ namespace SetUniverse
       · -- Caso x = y
         exact OrderedPair_function_return_isOrderedPair_x_eq_y x y h_eq
       · -- Caso x ≠ y
-        exact OrderedPair_function_return_isOrderedPair_x_ne_y x y h_ne
+        exact OrderedPair_function_return_isOrderedPair_x_ne_y x y h_eq
 
   -- Demostración de que fst recupera el primer elemento.
   theorem fst_of_ordered_pair (x y : U) : fst ⟨x, y⟩ = x :=
-  by
-    unfold fst
-    -- Probar que isOrderedPair ⟨x, y⟩ es verdadero
-    have h_isop : isOrderedPair ⟨x, y⟩ := by
-      -- ⟨x, y⟩ es un par ordenado por construcción
-      left
-      -- isOrderedPair ⟨x, y⟩ = isDiagonalOrderedPair ⟨x, y⟩ ∨ isNonDiagonalOrderedPair ⟨x, y⟩
-      -- Aquí, ⟨x, y⟩ es diagonal si x = y, no diagonal si x ≠ y.
-      -- Para la prueba, asumimos el caso diagonal para fst.
-      -- Si necesitas distinguir casos, usa 'by_cases' sobre x = y.
-      -- Aquí simplemente damos la prueba por construcción.
-      unfold isDiagonalOrderedPair
-      unfold isSingleton
-      -- isSingleton ⟨x, y⟩ es cierto si ⟨x, y⟩ tiene un solo elemento, lo cual ocurre si x = y.
-      -- Para la prueba de fst, esto es suficiente.
-      -- Si x = y, entonces ⟨x, y⟩ = { {x}, {x, y} } = { {x}, {x} } = { {x} }
-      -- No unfold here: use case analysis or by_cases if needed.
-      -- Ahora, si isOrderedPair ⟨x, y⟩ es verdadero, entonces existe un par ordenado.
-    have h_exists : ∃ z, z ∈ ((⋂ (⟨x, y⟩ : U)): U) := by
-      -- By Intersection_of_pair, ⋂ ⟨x, y⟩ = {x}, so x ∈ {x}
-      -- ⟨x, y⟩ = { {x}, {x, y} }, so ⋂ ⟨x, y⟩ = {x} ∩ {x, y}
-      have h_pair : (⟨x, y⟩ : U) = (({ {x}, {x, y} }): U) := rfl
-      rw [h_pair, Intersection_of_pair]
-      -- Now goal: (({x} ∩ {x, y}) : U) = {x}
-      have h_inter : ({x} ∩ {x, y} : U) = {x} := by
-        apply ExtSet
-        intro z
-        rw [BinIntersection_is_specified, Singleton_is_specified, PairSet_is_specified]
-        constructor
-        · intro h
-          rcases h with ⟨hzx, hzxy⟩
-          -- Aquí, z debe ser x o y
-          match (PairSet_is_specified x y z).mp hzxy with
-          | Or.inl h_eq => rw [h_eq]; exact hzx
-          | Or.inr h_eq => rw [h_eq] at hzx; exact hzx
-        · intro hz_eq
-          constructor
-          · rw [hz_eq]
-            exact (Singleton_is_specified x x).mpr rfl
-          · rw [hz_eq]
-            exact (PairSet_is_specified x y x).mpr (Or.inl rfl)
-      rw [h_inter]
-      use x
-      exact (Singleton_is_specified x x).mpr rfl
-    rw [if_pos h_isop]
-    -- Probar que ∃ z, z ∈ ⋂ ⟨x, y⟩
-    have h_inter : ⋂ ⟨x, y⟩ = {x} := Intersection_of_pair x y
-    rw [h_inter]
-    have h_ex : ∃ z, z ∈ {x} := by
-      use x
-      exact (Singleton_is_specified x x).mpr rfl
-    rw [if_pos h_ex]
-    -- Ahora la meta es: ⋂ {x} = x
-    exact Intersection_of_singleton x
+    by sorry
 
   -- Demostración de que snd recupera el segundo elemento.
   -- Esta prueba es más compleja porque debe considerar si x = y o no.
   theorem snd_of_ordered_pair (x y : U) : snd ⟨x, y⟩ = y :=
-  by
-    -- Aquí necesitaríamos la definición constructiva de `snd`.
-    -- Asumiendo una definición correcta que maneje los casos x=y y x≠y,
-    -- la prueba seguiría la lógica que hemos discutido. Por ahora,
-    -- usaremos `sorry` para centrarnos en el teorema principal.
-    sorry
+    by sorry
 
   -- El teorema principal que une todo.
   theorem OrderedPairSet_is_WellConstructed (w : U) :
     (isOrderedPair w) → w = (⟨ fst w, snd w ⟩ : U) :=
-  by
-    -- 1. Introducimos la hipótesis de que 'w' es un par ordenado.
-    intro h_is_op
-    -- h_is_op : isOrderedPair w
+    by sorry
 
-    -- 2. Descomponemos la hipótesis. Por su definición, si 'w' es un par ordenado,
-    --    entonces existen 'x' e 'y' tales que w = ⟨x, y⟩.
-    cases h_is_op with x hx
-    cases hx with y h_w_eq
-    -- Ahora tenemos en el contexto:
-    -- x : U, y : U, h_w_eq : w = ⟨x, y⟩
-
-    -- 3. Sustituimos 'w' en nuestra meta usando la igualdad que acabamos de obtener.
-    rw [h_w_eq]
-    -- La meta ahora es: ⟨x, y⟩ = ⟨fst ⟨x, y⟩, snd ⟨x, y⟩⟩
-
-    -- 4. Usamos nuestros teoremas auxiliares para probar que las componentes son iguales.
-    have h_fst : fst ⟨x, y⟩ = x := by exact fst_of_ordered_pair x y
-    -- Para snd, asumimos que tenemos una prueba (el 'sorry' de arriba).
-    have h_snd : snd ⟨x, y⟩ = y := by exact snd_of_ordered_pair x y
-
-    -- 5. Sustituimos los resultados de fst y snd en la meta.
-    rw [h_fst, h_snd]
-    -- La meta se convierte en ⟨x, y⟩ = ⟨x, y⟩, lo cual es cierto por reflexividad.
-    rfl
 
   end PairingAxiom
 end SetUniverse
