@@ -22,26 +22,55 @@ namespace SetUniverse
     ∀ (C : U), ∃ (UC : U), ∀ (x :U), x ∈ UC ↔ ∃ (y : U), y ∈ C ∧ x ∈ y
 
   /-! ### Teorema de Existencia Única para el Axioma de Unión ### -/
-  theorem UnionExistsUnique (C : U) :
+  @[simp] theorem UnionExistsUnique (C : U) :
     ∃! (UC : U), ∀ (x : U), x ∈ UC ↔ ∃ (y : U), y ∈ C ∧ x ∈ y
       := by
-    ExistsUnique.mk (Union C) fun UC₁ UC₂ h₁ h₂ =>
-      by
-      apply funext
+    obtain ⟨UC, hUC⟩ := Union C
+    apply ExistsUnique.intro UC
+    · -- proof that the witness satisfies the property
+      exact hUC
+    · -- proof of uniqueness
+      intros UC₁ h₁
+      apply ExtSet
       intro x
-      apply propext
       constructor
-      . intro h
-        obtain ⟨y, hyC, hyx⟩ := h₁ x h
-        exact ⟨y, hyC, hyx⟩
-      . intro h
-        obtain ⟨y, hyC, hyx⟩ := h₂ x h
-        exact ⟨y, hyC, hyx⟩
+      . intro hx
+        have h_ex : ∃ y, y ∈ C ∧ x ∈ y := (h₁ x).mp hx
+        exact (hUC x).mpr h_ex
+      . intro hx
+        have h_ex : ∃ y, y ∈ C ∧ x ∈ y := (hUC x).mp hx
+        exact (h₁ x).mpr h_ex
 
   theorem Union_is_specified (C x : U) :
-    x ∈ choose (Union C) ↔ ∃ S
+    x ∈ (choose (Union C)) ↔ ∃ (S : U), S ∈ C ∧ x ∈ S
       := by
-    UnionExistsUnique C
+    have hUC := choose_spec (Union C)
+    constructor
+    . intro h
+      exact (hUC x).mp h
+    . intro h
+      exact (hUC x).mpr h
+
+  noncomputable def UnionSet (C : U) : U :=
+    choose (UnionExistsUnique C)
+
+  notation " ⋃ " C: 100 => UnionSet C
+
+  theorem UnionSet_is_specified (C x : U) :
+    x ∈ (⋃ C) ↔ ∃ (S : U), S ∈ C ∧ x ∈ S
+      := by
+    unfold UnionSet
+    constructor
+    . intro h
+      exact ((choose_spec (UnionExistsUnique C)).1 x).mp h
+    . intro h
+      exact ((choose_spec (UnionExistsUnique C)).1 x).mpr h
+
+  theorem UnionSet_is_unique (C : U) :
+    ∃! (UC : U), ∀ (x : U), x ∈ UC ↔ ∃ (S : U), S ∈ C ∧ x ∈ S
+      := by
+    apply UnionExistsUnique C
+
   end UnionAxiom
 end SetUniverse
 
