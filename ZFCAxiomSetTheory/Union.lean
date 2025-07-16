@@ -18,7 +18,7 @@ namespace SetUniverse
   namespace UnionAxiom
 
   /-! ### Axioma de Unión ### -/
-  axiom Union :
+  @[simp] axiom Union :
     ∀ (C : U), ∃ (UC : U), ∀ (x :U), x ∈ UC ↔ ∃ (y : U), y ∈ C ∧ x ∈ y
 
   /-! ### Teorema de Existencia Única para el Axioma de Unión ### -/
@@ -41,7 +41,7 @@ namespace SetUniverse
         have h_ex : ∃ y, y ∈ C ∧ x ∈ y := (hUC x).mp hx
         exact (h₁ x).mpr h_ex
 
-  theorem Union_is_specified (C x : U) :
+  @[simp] theorem Union_is_specified (C x : U) :
     x ∈ (choose (Union C)) ↔ ∃ (S : U), S ∈ C ∧ x ∈ S
       := by
     have hUC := choose_spec (Union C)
@@ -51,12 +51,12 @@ namespace SetUniverse
     . intro h
       exact (hUC x).mpr h
 
-  noncomputable def UnionSet (C : U) : U :=
+  @[simp] noncomputable def UnionSet (C : U) : U :=
     choose (UnionExistsUnique C)
 
   notation " ⋃ " C: 100 => UnionSet C
 
-  theorem UnionSet_is_specified (C x : U) :
+  @[simp] theorem UnionSet_is_specified (C x : U) :
     x ∈ (⋃ C) ↔ ∃ (S : U), S ∈ C ∧ x ∈ S
       := by
     unfold UnionSet
@@ -66,7 +66,7 @@ namespace SetUniverse
     . intro h
       exact ((choose_spec (UnionExistsUnique C)).1 x).mpr h
 
-  theorem UnionSet_is_unique (C : U) :
+  @[simp] theorem UnionSet_is_unique (C : U) :
     ∃! (UC : U), ∀ (x : U), x ∈ UC ↔ ∃ (S : U), S ∈ C ∧ x ∈ S
       := by
     apply UnionExistsUnique C

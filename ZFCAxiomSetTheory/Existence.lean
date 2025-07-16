@@ -13,7 +13,7 @@ namespace SetUniverse
 
     /-! ### Axioma de Existencia ### -/
     /-! ### Existence : existe algún conjunto vacío en el universo U ### -/
-    axiom ExistsAnEmptySet : ∃ (x : U), ∀ (y : U), y ∉ x
+    @[simp] axiom ExistsAnEmptySet : ∃ (x : U), ∀ (y : U), y ∉ x
 
     /-! ### Teorema de Existencia Única ### -/
     /-! ### ExistenceUnique : existe un único conjunto vacío en el universo U ### -/
