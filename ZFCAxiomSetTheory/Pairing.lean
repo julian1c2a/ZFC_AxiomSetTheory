@@ -464,7 +464,6 @@ namespace SetUniverse
       else
         False
 
-
   /-! ### Función que dice (`Prop`) si un conjunto `w` es un par ordenado no diagonal ### -/
   def isNonDiagonalOrderedPair_concept (w : U) : Prop :=
     ∃ (x y : U), (x ≠ y) ∧ w = ({ ({ x }: U), ({ x , y }: U) }: U)
@@ -496,7 +495,6 @@ namespace SetUniverse
           False -- Caso que no son dos elementos (no es un par ordenado)
       else
         False -- Caso que no es un par ordenado (no es un par ordenado diagonal o no diagonal)
-
 
   /-! ### Función que dice (`Prop`) si un conjunto `w` es un par ordenado ### -/
   def isOrderedPair_concept (w : U) : Prop :=
@@ -535,7 +533,6 @@ namespace SetUniverse
     rw [h_intersection] at h_empty
     have h_singleton_nonempty := PairSet_singleton_is_nonempty x
     exact h_singleton_nonempty h_empty
-
 
   noncomputable def fst (w : U) : U := (⋂ (⋂ w))
 
@@ -647,6 +644,12 @@ namespace SetUniverse
 
   noncomputable def isWellDefined (R : U) : Prop :=
     ∀ (x y₁ y₂ : U), ⟨ x , y₁ ⟩ ∈ R → ⟨ x , y₂ ⟩ ∈ R → y₁ = y₂
+
+  noncomputable def isTotalOrder (R : U) : Prop :=
+    isPartialOrder R ∧ ∀ (x y : U), x ≠ y → ⟨ x , y ⟩ ∈ R ∨ ⟨ y , x ⟩ ∈ R
+
+  noncomputable def isWellFounded (R : U) : Prop :=
+    ∀ (A : U), A ≠ ∅ → ∃ (x : U), x ∈ A ∧ ∀ (y : U), ⟨ y , x ⟩ ∈ R → y ∉ A
 
   noncomputable def isFunction (A R : U) : Prop :=
     ∀ (x : U), x ∈ A → ∃ (y₁ : U), ∀ (y₂ : U), ⟨ x , y₁ ⟩ ∈ R → ⟨ x , y₂ ⟩ ∈ R → y₁ = y₂
