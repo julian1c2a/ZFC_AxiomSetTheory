@@ -199,111 +199,109 @@ namespace SetUniverse
 
     /-! ### Teorema de existencia única del conjunto Intersección ### -/
     @[simp] theorem Intersection_unique_set (w : U) : w ≠ (∅ : U) → ∃! (z : U), ∀ (v : U), v ∈ z ↔ member_intersection w v
-      := by
-    intro h_nonempty
-    by_cases h_intersection_nonempty : (⋂ w) ≠ ∅
-    . -- Si la intersección es no vacía, entonces existe un elemento en w
-      have h_exists : ∃ y, y ∈ w := (nonempty_iff_exists_mem w).mp h_nonempty
-      -- Provide all required arguments: w, (⋂ w), h_nonempty, h_exists
+        := by
+      intro h_nonempty
+      have h_exists_y : ∃ y, y ∈ w := (nonempty_iff_exists_mem w).mp h_nonempty
       apply ExistsUnique.intro (⋂ w)
-      · -- Existence: (⋂ w) satisfies the specification
-        exact fun v => (Intersection_is_specified w v h_nonempty h_exists)
-      · -- Uniqueness: any z satisfying the specification is equal to (⋂ w)
+      · -- Existencia: (⋂ w) satisface la propiedad.
+        intro v
+        exact Intersection_is_specified w v h_nonempty h_exists_y
+      · -- Unicidad: cualquier z que satisface la propiedad es igual a (⋂ w).
         intro z hz_spec
         apply ExtSet
         intro v
         constructor
-        · intro hv_in_z
-          have h := hz_spec v
-          exact (Intersection_is_specified w v h_nonempty h_exists).mpr (h.mp hv_in_z)
-        · intro hv_in_inter
-          have h := hz_spec
-          exact (h v).mpr ((Intersection_is_specified w v h_nonempty h_exists).mp hv_in_inter)
-    . -- Si la intersección es vacía, entonces el conjunto vacío cumple la especificación
-      apply ExistsUnique.intro ∅
-      · -- Existencia: ∅ cumple la especificación
-        intro v
-        constructor
-        · intro hv_in_empty
-          exfalso
-          exact EmptySet_is_empty v hv_in_empty
-        · intro h_member_intersection
-          exfalso
-          -- member_intersection w v requires v ∈ y for all y ∈ w, but w ≠ ∅, so contradiction
-          have h_exists : ∃ y, y ∈ w := (nonempty_iff_exists_mem w).mp h_nonempty
-          rcases h_exists with ⟨y, hy_in_w⟩
-          have h_v_in_y := h_member_intersection y hy_in_w
-          -- But ∅ has no elements
-          exact EmptySet_is_empty v h_v_in_y
-      · -- Unicidad: cualquier z que cumple la especificación es igual a ∅
-        intro z hz_spec
-        apply ExtSet
-        intro v
-        constructor
-        · intro hv_in_z
-          exfalso
-          exact EmptySet_is_empty v hv_in_empty
-        · intro hv_in_empty
-          exfalso
-          exact EmptySet_is_empty v hv_in_empty
+        · -- Dirección: v ∈ z → v ∈ (⋂ w)
+          intro hv_in_z
+          have h_v_mem_inter_w := (hz_spec v).mp hv_in_z
+          exact (Intersection_is_specified w v h_nonempty h_exists_y).mpr h_v_mem_inter_w
+        · -- Dirección: v ∈ (⋂ w) → v ∈ z
+          intro hv_in_inter_w
+          have h_v_mem_inter_w := (Intersection_is_specified w v h_nonempty h_exists_y).mp hv_in_inter_w
+          exact (hz_spec v).mpr h_v_mem_inter_w
 
 
     -- Theorem: Intersection is specified by the intersection of a family of sets
     /-! ### Teorema que ∀ (x : U), x ∈ W → ⋂ W ⊆ x ### -/
-    @[simp] theorem Intersection_subset (W : U) (x : U) : x ∈ W → (⋂ W) ⊆ x
-      := by
-    intro hx_in_W z hz_in_intersection
-    have h_nonempty : W ≠ ∅ := by
-      intro h_empty
-      rw [h_empty] at hx_in_W
-      exact EmptySet_is_empty x hx_in_W
-    have hz_member_intersection := (Intersection_is_specified W h_nonempty z).mp hz_in_intersection
-    unfold member_intersection at hz_member_intersection
-    exact hz_member_intersection x hx_in_W
+    @[simp] theorem Intersection_subset (W x : U) : x ∈ W → (⋂ W) ⊆ x
+        := by
+      intro hx_in_W z hz_in_intersection
+      let h_intersection_nonempty : U → Prop := fun W => ∃ (y : U), y ∈ ((⋂ W) : U)
+      have h_nonempty : W ≠ ∅ := by
+        intro h_empty
+        rw [h_empty] at hx_in_W
+        exact EmptySet_is_empty x hx_in_W
+      by_cases h_intersection_nonempty : ∃ (y : U), y ∈ ((⋂ (W : U)) : U)
+      case pos =>
+          have h_intersection := choose_spec (Intersection_unique_set W h_nonempty)
+          let h_exists_y := (nonempty_iff_exists_mem W).mp h_nonempty
+          have hz_member_intersection := (Intersection_is_specified W z h_nonempty h_exists_y).mp hz_in_intersection
+          unfold member_intersection at hz_member_intersection
+          exact hz_member_intersection x hx_in_W
+      case neg =>
+          -- If the intersection is empty, then it is a subset of any set
+          have h_empty_intersection : ((⋂ (W : U)) : U) = (∅ : U) := by
+            apply ExtSet
+            intro y
+            constructor
+            · intro hy_in_intersection
+              -- If y ∈ ⋂ W, then ∃ y, y ∈ ⋂ W, contradiction
+              exfalso
+              exact h_intersection_nonempty ⟨y, hy_in_intersection⟩
+            · intro hy_in_empty
+              -- y ∈ ∅ is impossible
+              exfalso
+              exact EmptySet_is_empty y hy_in_empty
+          have hz_in_empty : z ∈ ∅ := by rw [←h_empty_intersection]; exact hz_in_intersection
+          exfalso
+          exact EmptySet_is_empty z hz_in_empty
 
     /-! ### Inversión de ser subconjunto W ⊆ V → ⋂V ⊆ ⋂W ### --/
     @[simp] theorem Intersection_subset_of_superset (W V : U) : ( W ≠ ∅ ∧ V ≠ ∅ ) → ( W ⊆ V → (⋂ V) ⊆ (⋂ W) )
-      := by
-    intro h_nonempty h_w_subs_v z hz_in_intersection_v
-    have h_nonempty_w : W ≠ ∅ := h_nonempty.1
-    have h_nonempty_v : V ≠ ∅ := h_nonempty.2
-    have hz_member_intersection_v := (Intersection_is_specified V h_nonempty_v z).mp hz_in_intersection_v
-    unfold member_intersection at hz_member_intersection_v
-    have hz_member_intersection_w : member_intersection W z := by
-      unfold member_intersection
-      intro y hy_in_w
-      exact hz_member_intersection_v y (h_w_subs_v y hy_in_w)
-    exact (Intersection_is_specified W h_nonempty_w z).mpr hz_member_intersection_w
+        := by
+      intro h_nonempty h_w_subs_v z hz_in_intersection_v
+      have h_nonempty_w : W ≠ ∅ := h_nonempty.1
+      have h_nonempty_v : V ≠ ∅ := h_nonempty.2
+      have h_exists_y : ∃ y, y ∈ V := (nonempty_iff_exists_mem V).mp h_nonempty_v
+      have hz_member_intersection_v := (Intersection_is_specified V z h_nonempty_v h_exists_y).mp hz_in_intersection_v
+      unfold member_intersection at hz_member_intersection_v
+      have hz_member_intersection_w : member_intersection W z := by
+        unfold member_intersection
+        intro y hy_in_w
+        exact hz_member_intersection_v y (h_w_subs_v y hy_in_w)
+      let h_exists_y := (nonempty_iff_exists_mem W).mp h_nonempty_w
+      exact (Intersection_is_specified W z h_nonempty_w h_exists_y).mpr hz_member_intersection_w
 
     /-! ### Si un elemento de la familia a interseccionar es vacío, la intersección es vacía ### -/
     @[simp] theorem Intersection_empty_if_empty (W : U) : (∃ (x : U), x ∈ W ∧ x = ∅) → ((⋂ W) = ∅)
-      := by
-    intro h_exists_empty
-    have h_nonempty : W ≠ ∅ := by
-      intro h_empty
-      have h := choose_spec h_exists_empty
-      have h_mem : choose h_exists_empty ∈ W := h.left
-      have h_mem_empty : choose h_exists_empty ∈ ∅ := h_empty ▸ h_mem
-      exact EmptySet_is_empty (choose h_exists_empty) h_mem_empty
-    apply (ExtSet (⋂ W) ∅)
-    intro z
-    constructor
-    · -- Dirección ->
-      intro hz_in_intersection
-      exfalso
-      have h := choose_spec h_exists_empty
-      have h_empty_in_w : choose h_exists_empty ∈ W := h.left
-      have h_empty_eq : choose h_exists_empty = ∅ := h.right
-      have hz_in_empty : z ∈ choose h_exists_empty := by
-        have hz_member_intersection := (Intersection_is_specified W h_nonempty z).mp hz_in_intersection
-        unfold member_intersection at hz_member_intersection
-        exact hz_member_intersection (choose h_exists_empty) h_empty_in_w
-      rw [h_empty_eq] at hz_in_empty
-      exact EmptySet_is_empty z hz_in_empty
-    · -- Dirección <-
-      intro hz_in_empty
-      exfalso
-      exact EmptySet_is_empty z hz_in_empty
+        := by
+      intro h_exists_empty
+      have h_nonempty : W ≠ ∅ := by
+        intro h_empty
+        have h := choose_spec h_exists_empty
+        have h_mem : choose h_exists_empty ∈ W := h.left
+        have h_mem_empty : choose h_exists_empty ∈ ∅ := h_empty ▸ h_mem
+        exact EmptySet_is_empty (choose h_exists_empty) h_mem_empty
+      apply (ExtSet (⋂ W) ∅)
+      intro z
+      constructor
+      · -- Dirección ->
+        intro hz_in_intersection
+        exfalso
+        have h := choose_spec h_exists_empty
+        have h_empty_in_w : choose h_exists_empty ∈ W := h.left
+        have h_empty_eq : choose h_exists_empty = ∅ := h.right
+        have hz_in_empty : z ∈ choose h_exists_empty := by
+          let h_exists_y := (nonempty_iff_exists_mem W).mp h_nonempty
+          have hz_member_intersection := (Intersection_is_specified W z h_nonempty h_exists_y).mp hz_in_intersection
+          unfold member_intersection at hz_member_intersection
+          exact hz_member_intersection (choose h_exists_empty) h_empty_in_w
+        rw [h_empty_eq] at hz_in_empty
+        exact EmptySet_is_empty z hz_in_empty
+      · -- Dirección <-
+        intro hz_in_empty
+        exfalso
+        exact EmptySet_is_empty z hz_in_empty
 
     /-! ### ⋂{A , B} = A ∩ B ### -/
     @[simp] theorem Intersection_of_pair (A B : U) : (⋂ { A , B }) = (A ∩ B)
@@ -314,7 +312,8 @@ namespace SetUniverse
       · -- Dirección ->
         intro hz_in_intersection
         have h_nonempty : ({ A , B }) ≠ EmptySet := PairSet_is_nonempty A B
-        have hz_member_intersection := (Intersection_is_specified ({ A , B } : U) h_nonempty z).mp hz_in_intersection
+        have h_exists_y : ∃ y, y ∈ ({ A , B } : U) := (nonempty_iff_exists_mem ({ A , B } : U)).mp h_nonempty
+        have hz_member_intersection := (Intersection_is_specified ({ A , B } : U) z h_nonempty h_exists_y).mp hz_in_intersection
         unfold member_intersection at hz_member_intersection
         have hz_in_A : z ∈ A := hz_member_intersection A ((PairSet_is_specified A B A).mpr (Or.inl rfl))
         have hz_in_B : z ∈ B := hz_member_intersection B ((PairSet_is_specified A B B).mpr (Or.inr rfl))
@@ -323,22 +322,10 @@ namespace SetUniverse
         intro hz_in_A_and_B
         unfold Intersection
         have h_exists : ∃ y, y ∈ ({ A , B } : U) := by
-          by_contra h_not_exists
-          push_neg at h_not_exists
-          have h_empty : ({ A , B } : U) = (∅ : U) := by
-            apply ExtSet
-            intro y
-            constructor
-            · intro hy_in_pair_set
-              exfalso
-              exact h_not_exists y hy_in_pair_set
-            · intro hy_in_empty
-              exfalso
-              exact EmptySet_is_empty y hy_in_empty
-          exfalso
-          exact PairSet_is_nonempty A B h_empty
+          -- Directly construct an element in the pair set
+          exact ⟨A, (PairSet_is_specified A B A).mpr (Or.inl rfl)⟩
         simp only [dif_pos h_exists]
-        have h := SpecSet_is_specified (choose h_exists) (fun v => ∀ y, y ∈ ({ A , B } : U) → (v ∈ y)) z
+        have h := SpecSet_is_specified (choose h_exists) z (fun v => ∀ y, y ∈ ({ A , B } : U) → (v ∈ y))
         have hz_in_A_and_B_spec := (BinIntersection_is_specified A B z).mp hz_in_A_and_B
         have hz_in_A : z ∈ A := hz_in_A_and_B_spec.left
         have hz_in_B : z ∈ B := hz_in_A_and_B_spec.right
@@ -360,41 +347,29 @@ namespace SetUniverse
 
     /-! ### ⋂{A} = A ### -/
     @[simp] theorem Intersection_of_singleton (A : U) : (⋂ { A }) = A
-      := by
-    apply ExtSet
-    intro z
-    constructor
-    · -- Dirección ->
-      intro hz_in_intersection
-      have h_nonempty : ({ A } : U) ≠ EmptySet := PairSet_singleton_is_nonempty A
-      have hz_member_intersection := (Intersection_is_specified { A } h_nonempty z).mp hz_in_intersection
-      unfold member_intersection at hz_member_intersection
-      exact hz_member_intersection A ((PairSet_is_specified A A A).mpr (Or.inl rfl))
-    · -- Dirección <-
-      intro hz_in_A
-      unfold Intersection
-      have h_exists : ∃ y, y ∈ ({ A } : U) := by
-        by_contra h_not_exists
-        push_neg at h_not_exists
-        have h_empty : ({ A } : U) = (∅ : U) := by
-          apply ExtSet
-          intro y
-          constructor
-          · intro hy_in_pair_set
-            exfalso
-            exact h_not_exists y hy_in_pair_set
-          · intro hy_in_empty
-            exfalso
-            exact EmptySet_is_empty y hy_in_empty
-        exact PairSet_singleton_is_nonempty A h_empty
-      simp only [dif_pos h_exists]
-      have h := SpecSet_is_specified (choose h_exists) (fun v => ∀ y, y ∈ ({ A } : U) → (v ∈ y)) z
-      have h_choose_in_singleton := choose_spec h_exists
-      have h_choose_spec := Singleton_is_specified A (choose h_exists)
-      have h_choose_eq_A : choose h_exists = A := h_choose_spec.mp h_choose_in_singleton
-      exact h.mpr ⟨h_choose_eq_A.symm ▸ hz_in_A, fun y hy_in_singleton =>
-        have h_spec := Singleton_is_specified A y
-        (h_spec.mp hy_in_singleton) ▸ hz_in_A⟩
+        := by
+      apply ExtSet
+      intro z
+      constructor
+      · -- Dirección ->
+        intro hz_in_intersection
+        have h_nonempty : ({ A } : U) ≠ EmptySet := PairSet_singleton_is_nonempty A
+        have h_exists_y : ∃ y, y ∈ ({ A } : U) := (nonempty_iff_exists_mem ({ A } : U)).mp h_nonempty
+        have hz_member_intersection := (Intersection_is_specified ({ A } : U) z h_nonempty h_exists_y).mp hz_in_intersection
+        unfold member_intersection at hz_member_intersection
+        exact hz_member_intersection A ((PairSet_is_specified A A A).mpr (Or.inl rfl))
+      · -- Dirección <-
+        intro hz_in_A
+        unfold Intersection
+        have h_exists : ∃ y, y ∈ ({ A } : U) := ⟨A, (PairSet_is_specified A A A).mpr (Or.inl rfl)⟩
+        simp only [dif_pos h_exists]
+        have h := SpecSet_is_specified (choose h_exists) z (fun v => ∀ y, y ∈ ({ A } : U) → (v ∈ y))
+        have h_choose_in_singleton := choose_spec h_exists
+        have h_choose_spec := Singleton_is_specified A (choose h_exists)
+        have h_choose_eq_A : choose h_exists = A := h_choose_spec.mp h_choose_in_singleton
+        exact h.mpr ⟨h_choose_eq_A.symm ▸ hz_in_A, fun y hy_in_singleton =>
+          have h_spec := Singleton_is_specified A y
+          (h_spec.mp hy_in_singleton) ▸ hz_in_A⟩
 
     /-! ### Definición del Par Ordenado (x,y) = { { x } , { x , y } } ### -/
     noncomputable def OrderedPair (x y : U) : U := (({ (({ x }): U) , (({ x , y }): U) }): U)
@@ -431,62 +406,39 @@ namespace SetUniverse
       intro hw_in_ordered_pair
       exact (hz_ordered_pair w).mpr ((OrderedPair_is_specified x y w).mp hw_in_ordered_pair)
 
-    @[simp] lemma nonempty_iff_exists_mem (w : U) : w ≠ ∅ ↔ ∃ y, y ∈ w := by
-    constructor
-    · intro h_nonempty
-      by_contra h_not_exists
-      push_neg at h_not_exists
-      have h_empty : w = ∅ := by
-        apply ExtSet
-        intro y
-        constructor
-        · intro hy_in_w
-          exfalso
-          exact h_not_exists y hy_in_w
-        · intro hy_in_empty
-          exfalso
-          exact EmptySet_is_empty y hy_in_empty
-      exact h_nonempty h_empty
-    · intro h_exists
-      intro h_empty
-      rcases h_exists with ⟨y, hy_in_w⟩
-      rw [h_empty] at hy_in_w
-      exact EmptySet_is_empty y hy_in_w
+    def logic_not_forall_notin (w : U) : Prop :=
+      (¬ (∀ (x : U), x ∉ w)) ↔ (∃ (t : U), t ∈ w)
+
+    def logic_not_exists_in (w : U) : Prop :=
+      (¬ (∃ (x : U), x ∈ w)) ↔ (∀ (t : U), t ∉ w)
 
     /-! ### Función que dice (`Prop`) si un conjunto `w` tiene un solo elemento ### -/
     def isSingleton_concept (w : U) : Prop :=
-      (w ≠ ∅) ∧ (∀ (x : U), x ∈ w → ∀ (y : U), y ∈ w → x = y)
+      (w ≠ ∅) → (∀ (x : U), x ∈ w → ∀ (y : U), y ∈ w → x = y)
 
     def isSingleton (w : U) : Prop :=
-      if h : ∀ (x : U), x ∉ w then
-        False -- El conjunto vacío no es un singleton
-              -- El vacío no tiene elementos (0)
-      else
-        have h_exists : ∃ t, t ∈ w := by push_neg at h; exact h
-        let v : U := choose h_exists
-        let y : U := w \ ({ v } : U)
-        if v ≠ (∅ : U) then
-          False  -- Caso que más de un solo elemento
-        else
-          True   -- Caso que tiene un solo elemento (singleton)
+      ∀ (t : U), t ∈ w → t = ({ ((⋂ w) : U) } : U)
+
 
     /-! ### Función que dice (`Prop`) si un conjunto `w` tiene dos elementos ### -/
     def isPairOfElements_concept (w : U) : Prop :=
       (w ≠ ∅) ∧ (∃ (x y : U), (x ≠ y) ∧ (w = ({ x , y }: U)))
 
     def isPairOfElements (w : U) : Prop :=
-      if h : ∀ (x : U), x ∉ w then
-        False -- El vacío no tiene elementos (0)
-      else
-        have h_exists : ∃ t, t ∈ w := by push_neg at h; exact h
-        let v : U := choose h_exists
-        let y : U := w \ ({ v } : U)
-        if h_y_nonempty : ∃ (t : U), t ∈ y then
-          let s : U := choose h_y_nonempty
-          let z : U := y \ {s}
-          if h_z_nonempty : ∃ (t : U), t ∈ z then
-            False -- Caso que más de dos elementos
-          else
+      let h : Prop := ∃ (v : U), v ∈ w
+      match h with
+      | False => False -- El vacío no tiene elementos (0)
+      | True =>
+        let v : U := Classical.choose h
+        let w₁ : U := Difference w ({ v }: U)
+        match w₁ with
+        | ∅ => False -- Caso que tiene un solo elemento (singleton)
+        | _ =>
+          let v₁ : U := choose (by push_neg at h; exact h)
+          let w₂ : U := Difference w₁ ({ v₁ }: U)
+          match w₂ with
+          | ∅ => False -- Caso que tiene un solo elemento (singleton)
+          | _ =>
             True -- Caso que tiene dos elementos (no necesariamente par ordenado)
         else
           False -- Caso que tiene un solo elemento (singleton no necesariamente par diagonal)
