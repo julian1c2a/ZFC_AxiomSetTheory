@@ -1,6 +1,5 @@
 import Mathlib.Logic.ExistsUnique
 import Init.Classical
-import Mathlib.Tactic
 import ZFCAxiomSetTheory.Extension
 
 namespace SetUniverse
@@ -17,7 +16,7 @@ namespace SetUniverse
 
     /-! ### Teorema de Existencia Única ### -/
     /-! ### ExistenceUnique : existe un único conjunto vacío en el universo U ### -/
-    theorem ExistsUniqueEmptySet :
+    @[simp] theorem ExistsUniqueEmptySet :
       ∃! (x : U), ∀ (y : U), y ∉ x
         := by
       obtain ⟨x, hx⟩ := ExistsAnEmptySet
@@ -28,16 +27,25 @@ namespace SetUniverse
         intro y hy_empty
         apply (ExtSet y x)
         intro z
-        simp [hx, hy_empty]
+        constructor
+        . -- Dirección ->
+          intro hz_in_y
+          exfalso
+          exact hy_empty z hz_in_y
+        . -- Dirección <-
+          intro hz_in_x
+          exfalso
+          exact hx z hz_in_x
 
-    noncomputable def EmptySet : U := choose (ExistsUnique.exists ExistsUniqueEmptySet)
+    @[simp] noncomputable def EmptySet : U :=
+      choose (ExistsUnique.exists ExistsUniqueEmptySet)
 
-    theorem EmptySet_is_empty : ∀ (y : U), y ∉ EmptySet := by
+    @[simp] theorem EmptySet_is_empty : ∀ (y : U), y ∉ EmptySet := by
       intro y
       have h := choose_spec (p := fun x => ∀ (y : U), y ∉ x) (ExistsUnique.exists ExistsUniqueEmptySet)
       exact h y
 
-    theorem EmptySet_unique : ∀ (x : U), (∀ (y : U), y ∉ x) → (x = EmptySet) := by
+    @[simp] theorem EmptySet_unique : ∀ (x : U), (∀ (y : U), y ∉ x) → (x = EmptySet) := by
       intro x hx_empty
       apply ExtSet
       intro y
@@ -54,7 +62,7 @@ namespace SetUniverse
 
     notation " ∅ " => EmptySet
 
-    theorem EmptySet_subseteq_any (x : U) : ∅ ⊆ x := by
+    @[simp] theorem EmptySet_subseteq_any (x : U) : ∅ ⊆ x := by
       intro y hy_in_empty
       exfalso
       exact EmptySet_is_empty y hy_in_empty

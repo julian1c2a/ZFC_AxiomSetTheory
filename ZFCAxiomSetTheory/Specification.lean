@@ -1,6 +1,5 @@
 import Mathlib.Logic.ExistsUnique
 import Init.Classical
-import Mathlib.Tactic
 import ZFCAxiomSetTheory.Extension
 import ZFCAxiomSetTheory.Existence
 
@@ -14,14 +13,14 @@ namespace SetUniverse
   namespace SpecificationAxiom
 
 
-  /-! ### Axioma de Especificación, Separación o Comprehensión ### -/
-  /-! ### Specification : existe algún conjunto en el universo U que cumple que es subconjunto de otro y que cumple la proposición P ### -/
-  axiom Specification (x : U) (P : U → Prop) :
+    /-! ### Axioma de Especificación, Separación o Comprehensión ### -/
+    /-! ### Specification : existe algún conjunto en el universo U que cumple que es subconjunto de otro y que cumple la proposición P ### -/
+    @[simp] axiom Specification (x : U) (P : U → Prop) :
     ∃ (y : U), ∀ (z : U), z ∈ y ↔ (z ∈ x ∧ P z)
 
-  /-! ### Teorema de Existencia Única para el Axioma de Especificación ### -/
-  /-! ### SpecificationUnique : existe un único conjunto que cumple la especificación P ### -/
-  theorem SpecificationUnique (x : U) (P : U → Prop) :
+    /-! ### Teorema de Existencia Única para el Axioma de Especificación ### -/
+    /-! ### SpecificationUnique : existe un único conjunto que cumple la especificación P ### -/
+    @[simp] theorem SpecificationUnique (x : U) (P : U → Prop) :
     ∃! (y : U), ∀ (z : U), z ∈ y ↔ (z ∈ x ∧ P z)
       := by
     obtain ⟨y, hy⟩ := Specification x P
@@ -49,30 +48,28 @@ namespace SetUniverse
           exact ⟨h_w_in_x, h_P_w⟩
         exact h_w_in_z
 
-  /-! ### Definición del conjunto especificado por el Axioma de Especificación ### -/
-  noncomputable def SpecSet (x : U) (P : U → Prop) : U :=
-    choose (SpecificationUnique x P)
+    /-! ### Definición del conjunto especificado por el Axioma de Especificación ### -/
+    @[simp] noncomputable def SpecSet (x : U) (P : U → Prop) : U :=
+      choose (SpecificationUnique x P)
 
-  theorem SpecSet_is_specified (x : U) (P : U → Prop) :
-    ∀ (z : U), z ∈ SpecSet x P ↔ (z ∈ x ∧ P z)
+    @[simp] theorem SpecSet_is_specified (x z : U) (P : U → Prop) :
+    z ∈ SpecSet x P ↔ (z ∈ x ∧ P z)
       := by
-    intro z
     exact (choose_spec (SpecificationUnique x P)).1 z
 
-  notation " { " x " | " P " } " => SpecSet x P
+    notation " { " x " | " P " } " => SpecSet x P
 
-  /-! ### Definición del conjunto especificado por el Axioma de Especificación ### -/
-  noncomputable def BinIntersection (x y : U) : U :=
-    choose (SpecificationUnique x fun z => z ∈ y)
+    /-! ### Definición del conjunto especificado por el Axioma de Especificación ### -/
+    @[simp] noncomputable def BinIntersection (x y : U) : U :=
+      choose (SpecificationUnique x fun z => z ∈ y)
 
-  theorem BinIntersection_is_specified (x y : U) :
-    ∀ (z : U), z ∈ BinIntersection x y ↔ (z ∈ x ∧ z ∈ y)
-      := by
-    intro z
-    have h := choose_spec (SpecificationUnique x fun z => z ∈ y)
-    exact h.1 z
+    @[simp] theorem BinIntersection_is_specified (x y z : U) :
+      z ∈ BinIntersection x y ↔ (z ∈ x ∧ z ∈ y)
+        := by
+      have h := choose_spec (SpecificationUnique x fun z => z ∈ y)
+      exact h.1 z
 
-  theorem BinIntersectionUniqueSet (x y : U) :
+    @[simp] theorem BinIntersectionUniqueSet (x y : U) :
     ∃! (z : U), ∀ (w : U), w ∈ z ↔ (w ∈ x ∧ w ∈ y)
       := by
     apply ExistsUnique.intro (BinIntersection x y)
@@ -94,11 +91,11 @@ namespace SetUniverse
         have h_both := (BinIntersection_is_specified x y w).mp hw_in_bin_intersection
         exact (hz_intersection w).mpr h_both
 
-  /-! ### Notación estándar de conjuntos de la Intersección Binaria ### -/
-  notation:50 lhs:51 " ∩ " rhs:51 => BinIntersection lhs rhs
+    /-! ### Notación estándar de conjuntos de la Intersección Binaria ### -/
+    notation:50 lhs:51 " ∩ " rhs:51 => BinIntersection lhs rhs
 
-  /-! ### Teorema de la Intersección es Subconjunto ### -/
-  theorem BinIntersection_subset (x y : U) :
+    /-! ### Teorema de la Intersección es Subconjunto ### -/
+    @[simp] theorem BinIntersection_subset (x y : U) :
     (x ∩ y) ⊆ x ∧ (x ∩ y) ⊆ y
       := by
     constructor
@@ -111,8 +108,8 @@ namespace SetUniverse
       have h := BinIntersection_is_specified x y z
       exact (h.1 h_z_in_bin_intersection).2
 
-  /-! ### Teorema de la Intersección de Conjuntos Disjuntos es Vacía ### -/
-  theorem BinIntersection_empty (x y : U) :
+    /-! ### Teorema de la Intersección de Conjuntos Disjuntos es Vacía ### -/
+    @[simp] theorem BinIntersection_empty (x y : U) :
     (x ∩ y) = ∅ ↔ (x ⟂ y)
       := by
     constructor
@@ -140,17 +137,17 @@ namespace SetUniverse
         intro h_z_in_empty
         exact False.elim (EmptySet_is_empty z h_z_in_empty)
 
-  theorem BinIntersection_empty_left_wc {x y : U} (h_empty : (x ∩ y) = ∅) :
+    @[simp] theorem BinIntersection_empty_left_wc {x y : U} (h_empty : (x ∩ y) = ∅) :
     x ⟂ y
       := by
     exact (BinIntersection_empty x y).mp h_empty
 
-  theorem BinIntersection_empty_right_wc {x y : U} (h_perp : x ⟂ y) :
+    @[simp] theorem BinIntersection_empty_right_wc {x y : U} (h_perp : x ⟂ y) :
     (x ∩ y) = ∅
       := by
     exact (BinIntersection_empty x y).mpr h_perp
 
-  theorem BinIntersection_commutative (x y : U) :
+    @[simp] theorem BinIntersection_commutative (x y : U) :
     (x ∩ y) = (y ∩ x)
       := by
     apply ExtSet
@@ -167,7 +164,7 @@ namespace SetUniverse
       have h_both := h.mp h_z_in_bin_intersection
       exact (BinIntersection_is_specified x y z).mpr ⟨h_both.2, h_both.1⟩
 
-  theorem BinIntersection_associative (x y z : U) :
+    @[simp] theorem BinIntersection_associative (x y z : U) :
     ((x ∩ y) ∩ z) = (x ∩ (y ∩ z))
       := by
     apply ExtSet
@@ -199,7 +196,7 @@ namespace SetUniverse
         exact ⟨h_w_in_x_intersection_y, h_w_in_yz_components.2⟩
       exact h_w_in_bin_intersection
 
-  theorem BinIntersection_absorbent_elem (x : U) :
+    @[simp] theorem BinIntersection_absorbent_elem (x : U) :
     (x ∩ ∅) = ∅
       := by
     apply ExtSet
@@ -216,7 +213,7 @@ namespace SetUniverse
       intro h_z_in_empty
       exact False.elim (EmptySet_is_empty z h_z_in_empty)
 
-  theorem BinIntersection_with_subseteq (x y : U) :
+    @[simp] theorem BinIntersection_with_subseteq (x y : U) :
     x ⊆ y → (x ∩ y) ⊆ x
       := by
     intro h_subset z h_z_in_bin_intersection
@@ -226,7 +223,7 @@ namespace SetUniverse
     have h_z_in_y : z ∈ y := h_both.2
     exact h_z_in_x
 
-  theorem BinIntersection_with_subseteq_full (x y : U) :
+    @[simp] theorem BinIntersection_with_subseteq_full (x y : U) :
     x ⊆ y ↔ (x ∩ y) = x
       := by
     constructor
@@ -253,12 +250,12 @@ namespace SetUniverse
       have h_both := h_bin_intersection.mp h_z_in_intersection
       exact h_both.2
 
-  theorem BinIntersection_with_empty (x : U) :
+    @[simp] theorem BinIntersection_with_empty (x : U) :
     (x ∩ ∅) = ∅
       := by
     exact BinIntersection_absorbent_elem x
 
-  theorem BinIntersection_idempotence (x : U) :
+    @[simp] theorem BinIntersection_idempotence (x : U) :
     (x ∩ x) = x
       := by
     apply ExtSet
@@ -273,21 +270,20 @@ namespace SetUniverse
       intro h_z_in_x
       exact (BinIntersection_is_specified x x z).mpr ⟨h_z_in_x, h_z_in_x⟩
 
-  /-! ### Definición de la Diferencia de Conjuntos ### -/
-  noncomputable def Difference (x y : U) : U :=
-    choose (SpecificationUnique x (fun z => z ∉ y))
+    /-! ### Definición de la Diferencia de Conjuntos ### -/
+    @[simp] noncomputable def Difference (x y : U) : U :=
+      choose (SpecificationUnique x (fun z => z ∉ y))
 
-  /-! ### Notación estándar de la Diferencia de Conjuntos ### -/
-  notation:50 lhs:51 " \\ " rhs:51 => Difference lhs rhs
+    /-! ### Notación estándar de la Diferencia de Conjuntos ### -/
+    notation:50 lhs:51 " \\ " rhs:51 => Difference lhs rhs
 
-  theorem Difference_is_specified (x y : U) :
-    ∀ (z : U), z ∈ (x \ y) ↔ (z ∈ x ∧ z ∉ y)
+    @[simp] theorem Difference_is_specified (x y z : U) :
+    z ∈ (x \ y) ↔ (z ∈ x ∧ z ∉ y)
       := by
-    intro z
     have h := choose_spec (SpecificationUnique x fun z => z ∉ y)
     exact h.1 z
 
-  theorem DifferenceUniqueSet (x y : U) :
+    @[simp] theorem DifferenceUniqueSet (x y : U) :
     ∃! (z : U), ∀ (w : U), w ∈ z ↔ (w ∈ x ∧ w ∉ y)
       := by
     apply ExistsUnique.intro (Difference x y)
@@ -309,7 +305,7 @@ namespace SetUniverse
         have h_both := (Difference_is_specified x y w).mp hw_in_difference
         exact (hz_difference w).mpr h_both
 
-  theorem Difference_subset (x y : U) :
+    @[simp] theorem Difference_subset (x y : U) :
     (x \ y) ⊆ x
       := by
     intro z h_z_in_difference
@@ -317,7 +313,7 @@ namespace SetUniverse
     have h_both := h_difference.mp h_z_in_difference
     exact h_both.1
 
-  theorem Difference_with_superseteq (x : U) {y : U} (h_x_superseteq_y : x ⊆ y) :
+    @[simp] theorem Difference_with_superseteq (x : U) {y : U} (h_x_superseteq_y : x ⊆ y) :
     (x \ y) = ∅ := by
     apply ExtSet
     intro z
@@ -334,7 +330,7 @@ namespace SetUniverse
       intro h_z_in_empty
       exact False.elim (EmptySet_is_empty z h_z_in_empty)
 
-  theorem Difference_with_empty (x : U) :
+    @[simp] theorem Difference_with_empty (x : U) :
     (x \ ∅) = x
       := by
     apply ExtSet
@@ -349,24 +345,24 @@ namespace SetUniverse
       intro h_z_in_x
       exact (Difference_is_specified x ∅ z).mpr ⟨h_z_in_x, EmptySet_is_empty z⟩
 
-  theorem Difference_self_empty (x : U) :
-    (x \ x) = ∅
-      := by
-    apply ExtSet
-    intro z
-    constructor
-    · -- Dirección ->
-      intro h_z_in_difference
-      have h_difference := Difference_is_specified x x z
-      have h_both := h_difference.mp h_z_in_difference
-      have h_z_in_x : z ∈ x := h_both.1
-      have h_z_not_in_x : z ∉ x := h_both.2
-      exact False.elim (h_z_not_in_x h_z_in_x)
-    · -- Dirección <-
-      intro h_z_in_empty
-      exact False.elim (EmptySet_is_empty z h_z_in_empty)
+    @[simp] theorem Difference_self_empty (x : U) :
+      (x \ x) = ∅
+        := by
+      apply ExtSet
+      intro z
+      constructor
+      · -- Dirección ->
+        intro h_z_in_difference
+        have h_difference := Difference_is_specified x x z
+        have h_both := h_difference.mp h_z_in_difference
+        have h_z_in_x : z ∈ x := h_both.1
+        have h_z_not_in_x : z ∉ x := h_both.2
+        exact False.elim (h_z_not_in_x h_z_in_x)
+      · -- Dirección <-
+        intro h_z_in_empty
+        exact False.elim (EmptySet_is_empty z h_z_in_empty)
 
-  theorem Difference_disjoint (x : U) {y: U} (h_disjoint : x ⟂ y) :
+    @[simp] theorem Difference_disjoint (x : U) {y: U} (h_disjoint : x ⟂ y) :
     (x \ y) = x
       := by
     apply ExtSet

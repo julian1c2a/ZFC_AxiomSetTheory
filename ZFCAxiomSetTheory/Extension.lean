@@ -1,6 +1,5 @@
 import Mathlib.Logic.ExistsUnique
 import Init.Classical
-import Mathlib.Tactic
 
 namespace SetUniverse
   open Classical
@@ -36,8 +35,11 @@ namespace SetUniverse
         rw [← h_eq] at hz_in_y
         exact hz_in_y
 
-    @[simp] theorem ExtSet_wc {x y : U} (h_x_subs_y: ∀ (z: U), z ∈ x → z ∈ y) (h_y_subs_x: ∀ (z: U), z ∈ y → z ∈ x) :
-      (x = y) := by
+    @[simp] theorem ExtSet_wc {x y : U}
+      (h_x_subs_y: ∀ (z: U), z ∈ x → z ∈ y)
+      (h_y_subs_x: ∀ (z: U), z ∈ y → z ∈ x) :
+      (x = y)
+        := by
       apply ExtSet
       intro z
       constructor
@@ -59,7 +61,7 @@ namespace SetUniverse
       subseteq x y ∧ (x ≠ y)
 
     /-! ### Notación estándar de subconjunto propio ### -/
-    notation:50 lhs:51 " ⊂ " rhs:51 => subseteq lhs rhs ∧ (lhs ≠ rhs)
+    notation:50 lhs:51 " ⊂ " rhs:51 => subset lhs rhs
 
     /-! ### Notación estándar de superconjunto y superconjunto propio ### -/
     notation:50 lhs:51 " ⊇ " rhs:51 => subseteq rhs lhs
@@ -87,7 +89,7 @@ namespace SetUniverse
       intro w h_w_in_x
       apply h_yz
       apply h_xy
-      exact h_w_in_x -- [cite: 131]
+      exact h_w_in_x
 
     @[simp] theorem subseteq_antisymmetric : ∀ (x y : U), x ⊆ y → y ⊆ x → x = y := by
       intro x y h_xy h_yx
@@ -95,11 +97,31 @@ namespace SetUniverse
       exact h_xy
       exact h_yx
 
-    instance : PartialOrder U where
-      le := subseteq
-      le_refl := subseteq_reflexive
-      le_trans := subseteq_transitive
-      le_antisymm := subseteq_antisymmetric
+    @[simp] theorem subset_asymmetric : ∀ (x y : U), x ⊂ y → ¬(y ⊂ x) := by
+      intro x y h_subs
+      intro h_subs_reverse
+      apply h_subs.2
+      apply EqualityOfSubset
+      exact h_subs.1
+      exact h_subs_reverse.1
+
+    @[simp] theorem subset_irreflexive : ∀ (x : U), ¬(x ⊂ x) := by
+      intro x h_subs
+      apply h_subs.2
+      rfl
+
+    @[simp] theorem subset_transitive : ∀ (x y z : U), x ⊂ y → y ⊂ z → x ⊂ z := by
+      intro x y z h_subs_xy h_subs_yz
+      constructor
+      · apply subseteq_transitive
+        exact h_subs_xy.1
+        exact h_subs_yz.1
+      · intro h_eq
+        apply h_subs_xy.2
+        apply EqualityOfSubset
+        exact h_subs_xy.1
+        rw [h_eq]
+        exact h_subs_yz.1
 
     /-! ### Definición de Conjuntos Disjuntos ### -/
     @[simp] def disjoint (x y : U) : Prop :=
@@ -150,19 +172,6 @@ namespace SetUniverse
         · exact h_subs
         · exact h_eq
 
-    @[simp] theorem subset_irreflexive (x : U) : ¬(x ⊂ x) := by
-      intro h_subs
-      apply h_subs.2
-      rfl
-
-    @[simp] theorem subset_asymmetric (x y : U) : (x ⊂ y) → ¬(y ⊂ x) := by
-      intro h_subs
-      intro h_subs_reverse
-      apply h_subs.2
-      apply EqualityOfSubset
-      exact h_subs.1
-      exact h_subs_reverse.1
-
     @[simp] theorem subset_asymmetric' (x y : U) : (x ⊆ y) → ¬(y ⊂ x) := by
       intro h_subs
       by_cases h_eq : x = y
@@ -177,77 +186,64 @@ namespace SetUniverse
         exact h_subs_reverse.1
         exact h_subs
 
-    @[simp] theorem subset_transitive (x y z : U) : (x ⊂ y) → (y ⊂ z) → (x ⊂ z) := by
+    @[simp] theorem subset_transitive' (x y z : U) : (x ⊆ y) → (y ⊂ z) → (x ⊂ z) := by
+      intro h_subs_xy h_subs_yz
+      constructor
+      · apply subseteq_transitive
+        exact h_subs_xy
+        exact h_subs_yz.1
+      · intro h_eq
+        apply h_subs_yz.2
+        apply EqualityOfSubset
+        exact h_subs_yz.1
+        rw [← h_eq]
+        exact h_subs_xy
+
+    @[simp] theorem subset_transitive'' (x y z : U) : (x ⊂ y) → (y ⊆ z) → (x ⊂ z) := by
       intro h_subs_xy h_subs_yz
       constructor
       · apply subseteq_transitive
         exact h_subs_xy.1
-        exact h_subs_yz.1
+        exact h_subs_yz
       · intro h_eq
         apply h_subs_xy.2
         apply EqualityOfSubset
         exact h_subs_xy.1
         rw [h_eq]
-        exact h_subs_yz.1
+        exact h_subs_yz
 
-  @[simp] theorem subset_transitive' (x y z : U) : (x ⊆ y) → (y ⊂ z) → (x ⊂ z) := by
-    intro h_subs_xy h_subs_yz
-    constructor
-    · apply subseteq_transitive
-      exact h_subs_xy
-      exact h_subs_yz.1
-    · intro h_eq
-      apply h_subs_yz.2
-      apply EqualityOfSubset
-      exact h_subs_yz.1
-      rw [← h_eq]
-      exact h_subs_xy
+    @[simp] noncomputable def isTransitiveSet (x : U) : Prop :=
+      ∀ (y : U), (y ∈ x) → (y ⊂ x)
 
-  @[simp] theorem subset_transitive'' (x y z : U) : (x ⊂ y) → (y ⊆ z) → (x ⊂ z) := by
-    intro h_subs_xy h_subs_yz
-    constructor
-    · apply subseteq_transitive
-      exact h_subs_xy.1
-      exact h_subs_yz
-    · intro h_eq
-      apply h_subs_xy.2
-      apply EqualityOfSubset
-      exact h_subs_xy.1
-      rw [h_eq]
-      exact h_subs_yz
+    @[simp] noncomputable def isEmpty (x : U) : Prop :=
+      ∀ y, y ∉ x
 
-  noncomputable def isTransitiveSet (x : U) : Prop :=
-    ∀ (y : U), (y ∈ x) → (y ⊂ x)
+    @[simp] noncomputable def isNonEmpty (x : U) : Prop :=
+      ∃ y, y ∈ x
 
-  noncomputable def isEmpty (x : U) : Prop :=
-    ∀ y, y ∉ x
+    @[simp] noncomputable def isSingleton (x : U) : Prop :=
+      ∃ y, ∀ z, z ∈ x → z = y
 
-  noncomputable def isNonEmpty (x : U) : Prop :=
-    ∃ y, y ∈ x
+    @[simp] noncomputable def isPair (x : U) : Prop :=
+      ∃ y z, ∀ w, w ∈ x → (w = y ∨ w = z)
 
-  noncomputable def isSingleton (x : U) : Prop :=
-    ∃ y, ∀ z, z ∈ x ↔ z = y
+    @[simp] noncomputable def isBinIntersection (x y s: U) : Prop :=
+      ∀ z, z ∈ x ↔ (z ∈ y ∧ z ∈ s)
 
-  noncomputable def isPair (x : U) : Prop :=
-    ∃ y z, ∀ w, w ∈ x ↔ (w = y ∨ w = z)
+    @[simp] noncomputable def isBinUnion (x y s: U) : Prop :=
+      ∀ z, z ∈ x ↔ (∃ t, t ∈ y ∧ z ∈ t) ∧ (z ∈ s)
 
-  noncomputable def isBinIntersection (x y s: U) : Prop :=
-    ∀ z, z ∈ x ↔ (z ∈ y ∧ z ∈ s)
+    @[simp] noncomputable def isBinDiff (x y s: U) : Prop :=
+      ∀ z, z ∈ x ↔ (z ∈ y ∧ ¬(z ∈ s))
 
-  noncomputable def isBinUnion (x y s: U) : Prop :=
-    ∀ z, z ∈ x ↔ (∃ t, t ∈ y ∧ z ∈ t) ∧ (z ∈ s)
+    @[simp] noncomputable def isBinSymDiff (x y s: U) : Prop :=
+      ∀ z, z ∈ x ↔ (z ∈ y ∧ z ∉ s) ∨ (z ∉ y ∧ z ∈ s)
 
-  noncomputable def isBinDiff (x y s: U) : Prop :=
-    ∀ z, z ∈ x ↔ (z ∈ y ∧ ¬(z ∈ s))
+    @[simp] noncomputable def isUnion (x X: U) : Prop :=
+      ∀ (z : U), z ∈ X ↔ ∃ (y : U), z ∈ y ∧ y ∈ x
 
-  noncomputable def isBinSymDiff (x y s: U) : Prop :=
-    ∀ z, z ∈ x ↔ (z ∈ y ∧ z ∉ s) ∨ (z ∉ y ∧ z ∈ s)
-
-  noncomputable def isUnion (x X: U) : Prop :=
-    ∀ (z : U), z ∈ X ↔ ∃ (y : U), z ∈ y ∧ y ∈ x
-
-  noncomputable def isIntersection (x X: U) : Prop :=
-    ∀ (z: U), z ∈ X ↔ ∀ (y: U), y ∈ x → z ∈ y
+    @[simp] noncomputable def isIntersection (x X: U) : Prop :=
+      ∀ (z: U), z ∈ X ↔ ∀ (y: U), y ∈ x → z ∈ y
 
   end ExtensionAxiom
 end SetUniverse

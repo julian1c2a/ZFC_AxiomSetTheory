@@ -17,59 +17,102 @@ namespace SetUniverse
 
   namespace UnionAxiom
 
-  /-! ### Axioma de Unión ### -/
-  @[simp] axiom Union :
-    ∀ (C : U), ∃ (UC : U), ∀ (x :U), x ∈ UC ↔ ∃ (y : U), y ∈ C ∧ x ∈ y
+    /-! ### Axioma de Unión ### -/
+    @[simp] axiom Union :
+      ∀ (C : U), ∃ (UC : U), ∀ (x : U), x ∈ UC ↔ ∃ (y : U), y ∈ C ∧ x ∈ y
 
-  /-! ### Teorema de Existencia Única para el Axioma de Unión ### -/
-  @[simp] theorem UnionExistsUnique (C : U) :
-    ∃! (UC : U), ∀ (x : U), x ∈ UC ↔ ∃ (y : U), y ∈ C ∧ x ∈ y
-      := by
-    obtain ⟨UC, hUC⟩ := Union C
-    apply ExistsUnique.intro UC
-    · -- proof that the witness satisfies the property
-      exact hUC
-    · -- proof of uniqueness
-      intros UC₁ h₁
-      apply ExtSet
-      intro x
+    /-! ### Teorema de Existencia Única para el Axioma de Unión ### -/
+    @[simp] theorem UnionExistsUnique (C : U) :
+      ∃! (UC : U), ∀ (x : U), x ∈ UC ↔ ∃ (y : U), y ∈ C ∧ x ∈ y
+        := by
+      obtain ⟨UC, hUC⟩ := Union C
+      apply ExistsUnique.intro UC
+      · -- proof that the witness satisfies the property
+        exact hUC
+      · -- proof of uniqueness
+        intros UC₁ h₁
+        apply ExtSet
+        intro x
+        constructor
+        . intro hx
+          have h_ex : ∃ y, y ∈ C ∧ x ∈ y := (h₁ x).mp hx
+          exact (hUC x).mpr h_ex
+        . intro hx
+          have h_ex : ∃ y, y ∈ C ∧ x ∈ y := (hUC x).mp hx
+          exact (h₁ x).mpr h_ex
+
+    @[simp] theorem Union_is_specified (C x : U) :
+      x ∈ (choose (Union C)) ↔ ∃ (S : U), S ∈ C ∧ x ∈ S
+        := by
+      have hUC := choose_spec (Union C)
       constructor
-      . intro hx
-        have h_ex : ∃ y, y ∈ C ∧ x ∈ y := (h₁ x).mp hx
-        exact (hUC x).mpr h_ex
-      . intro hx
-        have h_ex : ∃ y, y ∈ C ∧ x ∈ y := (hUC x).mp hx
-        exact (h₁ x).mpr h_ex
+      . intro h
+        exact (hUC x).mp h
+      . intro h
+        exact (hUC x).mpr h
 
-  @[simp] theorem Union_is_specified (C x : U) :
-    x ∈ (choose (Union C)) ↔ ∃ (S : U), S ∈ C ∧ x ∈ S
-      := by
-    have hUC := choose_spec (Union C)
-    constructor
-    . intro h
-      exact (hUC x).mp h
-    . intro h
-      exact (hUC x).mpr h
+    @[simp] noncomputable def UnionSet (C : U) : U :=
+      choose (UnionExistsUnique C)
 
-  @[simp] noncomputable def UnionSet (C : U) : U :=
-    choose (UnionExistsUnique C)
+    notation " ⋃ " C: 100 => UnionSet C
 
-  notation " ⋃ " C: 100 => UnionSet C
+    @[simp] theorem UnionSet_is_specified (C x : U) :
+      x ∈ (⋃ C) ↔ ∃ (S : U), S ∈ C ∧ x ∈ S
+        := by
+      unfold UnionSet
+      constructor
+      . intro h
+        exact ((choose_spec (UnionExistsUnique C)).1 x).mp h
+      . intro h
+        exact ((choose_spec (UnionExistsUnique C)).1 x).mpr h
 
-  @[simp] theorem UnionSet_is_specified (C x : U) :
-    x ∈ (⋃ C) ↔ ∃ (S : U), S ∈ C ∧ x ∈ S
-      := by
-    unfold UnionSet
-    constructor
-    . intro h
-      exact ((choose_spec (UnionExistsUnique C)).1 x).mp h
-    . intro h
-      exact ((choose_spec (UnionExistsUnique C)).1 x).mpr h
+    @[simp] theorem UnionSet_is_unique (C : U) :
+      ∃! (UC : U), ∀ (x : U), x ∈ UC ↔ ∃ (S : U), S ∈ C ∧ x ∈ S
+        := by
+      apply UnionExistsUnique C
 
-  @[simp] theorem UnionSet_is_unique (C : U) :
-    ∃! (UC : U), ∀ (x : U), x ∈ UC ↔ ∃ (S : U), S ∈ C ∧ x ∈ S
-      := by
-    apply UnionExistsUnique C
+    @[simp] theorem UnionSet_is_empty (C : U) :
+      (⋃ C) = ∅ ↔ ∀ (S : U), S ∈ C → S = ∅
+        := by
+      constructor
+      . intro h
+        intro S hS
+        by_contra hS_ne
+        have hS_nonempty : ∃ x, x ∈ S := exists_of_ne hS_ne
+        obtain ⟨x, hx⟩ := hS_nonempty
+        have h_in_union : x ∈ (⋃ C) := (UnionSet_is_specified C x).mpr ⟨S, hS, hx⟩
+        have h_empty : (⋃ C) = ∅ := h
+        exact h_empty (mem_empty_iff.mp h_in_union)
+      . intro h
+        apply ExtSet
+        intro x
+        constructor
+        . intro hx
+          by_contra h_ne
+          have h_ex : ∃ S, S ∈ C ∧ x ∈ S := (UnionSet_is_specified C x).mp hx
+          obtain ⟨S, hS, hxS⟩ := h_ex
+          have hS_ne : S ≠ ∅ := by
+            intro hS_empty
+            have h_empty : (⋃ C) = ∅ := hS_empty
+            exact h hS h_empty
+          exact hS_ne hxS
+        . intro hx
+          by_contra h_ne
+          have h_ex : ∃ S, S ∈ C ∧ x ∈ S := (UnionSet_is_specified C x).mp hx
+          obtain ⟨S, hS, hxS⟩ := h_ex
+          have hS_ne : S ≠ ∅ := by
+            intro hS_empty
+            have h_empty : (⋃ C) = ∅ := hS_empty
+            exact h hS h_empty
+          exact hS_ne hxS
+
+    @[simp] theorem UnionSetIsEmpty_SingletonEmptySet (C : U) :
+        (⋃ C) = ∅ ↔ C = ({ ∅ }: U)
+          := by
+      constructor
+      . intro h
+
+
 
   end UnionAxiom
 end SetUniverse
