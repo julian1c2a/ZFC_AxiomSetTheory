@@ -13,28 +13,22 @@ Antes de empezar, he notado que tu definición de `snd` es un poco frágil, espe
 
 ### 1\. Preparación: Definición Corregida de `snd`
 
-Primero, añade la importación del Axioma de Unión al principio de tu fichero `Pairing.lean` para poder usar `⋃`.
-
-```lean
-import ZFCAxiomSetTheory.Union
-```
-
-Y abre el espacio de nombres correspondiente:
-
-```lean
-open SetUniverse.UnionAxiom
-```
-
-Ahora, reemplaza tu definición actual de `snd` por esta:
+Nueva definición para no usar el Axioma de  Unión
 
 ```lean
 noncomputable def snd (w : U) : U :=
-  let I := ⋂ w  -- Intersección, que será {x}
-  let U := ⋃ w  -- Unión, que será {x, y}
-  if U = I then -- Caso diagonal: si U = I, entonces y = x
-    ⋂ I      -- Devolvemos el primer elemento (que es igual al segundo)
-  else
-    ⋂ (U \ I) -- Caso no diagonal: el elemento en U pero no en I, es decir, y
+  let I := ⋂ w -- Esto es {x}
+  let s := w \ {I} -- Esto es {{x, y}} si x≠y, y es ∅ si x=y
+  if h : s = ∅ then -- Esta condición ahora distingue perfectamente el caso diagonal
+    ⋂ I -- Si s es vacío, x=y, así que devolvemos x (que es y)
+  else -- Si s no es vacío, entonces x≠y
+    -- 's' no es vacío, así que podemos tomar su único elemento, que es {x,y}
+    have h_exists : ∃ y, y ∈ s := (nonempty_iff_exists_mem s).mp h
+    let s_elem := choose h_exists
+    -- A {x,y} le quitamos {x}, lo que nos deja {y}
+    let r := s_elem \ I
+    -- La intersección de {y} es y
+    ⋂ r
 ```
 
 -----
@@ -67,29 +61,32 @@ Esta prueba demuestra que la intersección de la intersección de un par ordenad
 Esta prueba es más compleja y usa la nueva definición de `snd`. Se divide en dos casos: cuando `x = y` (diagonal) y cuando `x ≠ y` (no diagonal).
 
 ```lean
+-- La prueba para 'fst_of_ordered_pair' no cambia.
+
 @[simp] theorem snd_of_ordered_pair (x y : U) : snd ⟨x, y⟩ = y := by
   unfold snd
-  -- Usamos 'by_cases' para separar la prueba en los dos casos posibles
   by_cases h_eq : x = y
-  -- Caso 1: x = y (Par ordenado diagonal)
-  · rw [h_eq] -- Sustituimos 'y' por 'x' en todo el teorema
-    -- Calculamos la Unión y la Intersección de ⟨x, x⟩ = {{x}}
-    have h_inter : (⋂ ⟨x, x⟩) = {x} := by simp
-    have h_union : (⋃ ⟨x, x⟩) = {x} := by simp [UnionSet_is_specified, OrderedPair, Singleton_is_specified]
-    -- Como U = I, la condición del 'if' es verdadera
-    simp only [h_inter, h_union, if_pos rfl, Intersection_of_singleton]
-  -- Caso 2: x ≠ y (Par ordenado no diagonal)
-  · -- Calculamos la Unión y la Intersección de ⟨x, y⟩ = {{x}, {x, y}}
-    have h_inter : (⋂ ⟨x, y⟩) = {x} := by simp [fst_of_ordered_pair] -- Reutilizamos la prueba de fst
-    have h_union : (⋃ ⟨x, y⟩) = {x, y} := by
-      apply ExtSet; intro z; simp [UnionSet_is_specified, OrderedPair_is_specified, PairSet_is_specified, Singleton_is_specified]
-    -- Como U ≠ I (porque x ≠ y), la condición del 'if' es falsa
-    simp only [h_inter, h_union, if_neg (by simp [ExtSet, *] <;> (intro h; apply h_eq; cases h <;> assumption))]
-    -- El objetivo ahora es: ⋂ ({x, y} \ {x}) = y
-    have h_diff : ({x, y} \ {x}) = {y} := by
-      apply ExtSet; intro z; simp [Difference_is_specified, PairSet_is_specified, Singleton_is_specified, h_eq]
-    -- Sustituimos y simplificamos para finalizar la prueba
-    rw [h_diff, Intersection_of_singleton]
+  -- Caso 1: x = y
+  · rw [h_eq]
+    have h_I : (⋂ ⟨x, x⟩) = {x} := by simp
+    have h_s : (⟨x, x⟩ \ {h_I}) = ∅ := by simp [Difference_is_specified, OrderedPair, Singleton_is_specified]
+    -- La condición del 'if' es verdadera
+    simp [h_I, h_s, dif_pos]
+  -- Caso 2: x ≠ y
+  · have h_I : (⋂ ⟨x, y⟩) = {x} := by simp
+    have h_s_ne : (⟨x, y⟩ \ {h_I}) ≠ ∅ := by 
+        simp [Difference_is_specified, OrderedPair, Singleton_is_specified, PairSet_is_specified, h_eq]
+    -- La condición del 'if' es falsa
+    simp only [h_I, dif_neg h_s_ne]
+    -- Simplificamos los términos restantes
+    have h_s_elem : choose ((nonempty_iff_exists_mem (⟨x, y⟩ \ {{x}})).mp h_s_ne) = {x, y} := by
+      -- Aquí se demuestra que el único elemento de {{x,y}} es {x,y}
+      apply ExtSet 
+      intro z
+    simp [Difference_is_specified, OrderedPair_is_specified, PairSet_is_specified, Singleton_is_specified, h_eq]
+    have h_r : (choose ((nonempty_iff_exists_mem (⟨x, y⟩ \ {{x}})).mp h_s_ne) \ {x}) = {y} := by
+      simp [h_s_elem, Difference_is_specified, PairSet_is_specified, Singleton_is_specified, h_eq]
+    simp [h_r]
 ```
 
 -----
