@@ -425,23 +425,17 @@ namespace SetUniverse
       (w ≠ ∅) ∧ (∃ (x y : U), (x ≠ y) ∧ (w = ({ x , y }: U)))
 
     def isPairOfElements (w : U) : Prop :=
-      let h : Prop := ∃ (v : U), v ∈ w
-      match h with
-      | False => False -- El vacío no tiene elementos (0)
-      | True =>
-        let v : U := Classical.choose h
-        let w₁ : U := Difference w ({ v }: U)
-        match w₁ with
-        | ∅ => False -- Caso que tiene un solo elemento (singleton)
-        | _ =>
-          let v₁ : U := choose (by push_neg at h; exact h)
-          let w₂ : U := Difference w₁ ({ v₁ }: U)
-          match w₂ with
-          | ∅ => False -- Caso que tiene un solo elemento (singleton)
-          | _ =>
-            True -- Caso que tiene dos elementos (no necesariamente par ordenado)
+      if h : ∃ (v : U), v ∈ w then
+        let v₁ : U := Classical.choose h
+        let w₁ : U := Difference w ({ v₁} : U)
+        if h₁ : ∃ (v : U), v ∈ w₁ then
+          let v₂ : U := Classical.choose h₁
+          let w₂ : U := Difference w₁ ({ v₂ } : U)
+          (isSingleton w₂) -- Verifica si el conjunto resultante tiene un solo elemento o tiene más de uno
         else
-          False -- Caso que tiene un solo elemento (singleton no necesariamente par diagonal)
+          False -- Caso que tiene un solo elemento (singleton)
+      else
+        False -- El vacío no tiene elementos (0)
 
     /-! ### Función que dice (`Prop`) si un conjunto `w` es un par ordenado diagonal ### -/
     def isDiagonalOrderedPair_concept (w : U) : Prop :=
@@ -457,9 +451,9 @@ namespace SetUniverse
       if h : ∀ (x : U), x ∉ w then
         False -- El vacío no tiene elementos (0)
       else
-        if h_single : isSingleton w then
-          let v : U := choose (by push_neg at h; exact h)
-          (isSingleton v)
+        if isSingleton w then
+          let v : U := Classical.choose (Classical.not_forall.mp h)
+          isSingleton v
         else
           False
 
@@ -504,49 +498,77 @@ namespace SetUniverse
 
     /-! ### Teorema de que un par ordenado es un conjunto no vacío ### -/
     @[simp] theorem OrderedPair_is_nonempty (x y : U) :
-    ⟨ x, y ⟩  ≠ (∅: U)
-      := by
-    intro h_empty
-    have h_ordered_pair : ⟨ x, y ⟩ = { { x } , { x , y } } := rfl
-    have h_singleton_x_in_pair : (({ x }): U) ∈ ( (⟨ x , y ⟩): U ) := by
-      rw [h_ordered_pair]
-      exact (PairSet_is_specified {x} {x, y} {x}).mpr (Or.inl rfl)
-    rw [h_empty] at h_singleton_x_in_pair
-    exfalso
-    exact EmptySet_is_empty {x} h_singleton_x_in_pair
+      ⟨ x, y ⟩  ≠ (∅: U)
+        := by
+      intro h_empty
+      have h_ordered_pair : ⟨ x, y ⟩ = { { x } , { x , y } } := rfl
+      have h_singleton_x_in_pair : (({ x }): U) ∈ ( (⟨ x , y ⟩): U ) := by
+        rw [h_ordered_pair]
+        exact (PairSet_is_specified {x} {x, y} {x}).mpr (Or.inl rfl)
+      rw [h_empty] at h_singleton_x_in_pair
+      exfalso
+      exact EmptySet_is_empty {x} h_singleton_x_in_pair
 
     @[simp] theorem IntersectionOrderedPair_is_nonempty (x y : U) :
-    (⋂ (⟨ x , y ⟩)) ≠ (∅: U)
-      := by
-    intro h_empty
-    have h_ordered_pair : (⟨ x , y ⟩) = { { x } , { x , y } } := rfl
-    have h_singleton_x_in_pair : {x} ∈ ((⟨ x , y ⟩): U) := by
-      rw [h_ordered_pair]
-      exact (PairSet_is_specified {x} {x, y} {x}).mpr (Or.inl rfl)
-    have h_intersection : (⋂ (⟨ x , y ⟩)) = {x} := by
-      rw [h_ordered_pair, Intersection_of_pair]
-      apply ExtSet
-      intro z
-      rw [BinIntersection_is_specified, Singleton_is_specified, PairSet_is_specified]
-      tauto
-    rw [h_intersection] at h_empty
-    have h_singleton_nonempty := PairSet_singleton_is_nonempty x
-    exact h_singleton_nonempty h_empty
+      (⋂ (⟨ x , y ⟩)) ≠ (∅: U)
+        := by
+      intro h_empty
+      have h_ordered_pair : (⟨ x , y ⟩) = { { x } , { x , y } } := rfl
+      have h_singleton_x_in_pair : {x} ∈ ((⟨ x , y ⟩): U) := by
+        rw [h_ordered_pair]
+        exact (PairSet_is_specified {x} {x, y} {x}).mpr (Or.inl rfl)
+      have h_intersection : (⋂ (⟨ x , y ⟩)) = {x} := by
+        rw [h_ordered_pair, Intersection_of_pair]
+        apply ExtSet
+        intro z
+        rw [BinIntersection_is_specified, Singleton_is_specified, PairSet_is_specified]
+        constructor
+        · -- Prove z ∈ {x} ↔ z = x and z ∈ {x, y} ↔ (z = x ∨ z = y)
+          intro h
+          have h₁ : z ∈ ({x} : U) ↔ z = x := Singleton_is_specified x z
+          have h₂ : z ∈ ({x, y} : U) ↔ (z = x ∨ z = y) := PairSet_is_specified x y z
+          -- h : z ∈ {x} ∧ z ∈ {x, y}
+          cases h with
+          | intro hz_in_singleton hz_in_pairset =>
+            exact hz_in_singleton
+        · -- Converse
+          intro h
+          have h₁ : z ∈ ({x} : U) ↔ z = x := Singleton_is_specified x z
+          have h₂ : z ∈ ({x, y} : U) ↔ (z = x ∨ z = y) := PairSet_is_specified x y z
+          exact And.intro h (Or.inl h)
+      rw [h_intersection] at h_empty
+      have h_singleton_nonempty := PairSet_singleton_is_nonempty x
+      exact h_singleton_nonempty h_empty
 
     noncomputable def fst (w : U) : U := (⋂ (⋂ w))
 
+    noncomputable def fst_concept (w : U) : U :=
+      if h : ∃ (v₀ : U), v₀ ∈ w then
+        let u₀ : U := Classical.choose h
+        u₀
+      else
+        (∅: U) -- convención, debería ser U
+
     noncomputable def snd (w : U) : U :=
-    let v₀ : U := (⋂ w) -- v₀ = { x }
-    let v : U := { v₀ } -- v = { { x } }
-    let s : U := (w \ v) -- s = { { x , y } }
-    let s₀ : U := (⋂ s) -- s₀ = { x , y }
-    let r₀ : U := (s₀ \ v₀) -- r₀ = { y }
-    let r₁ : U := (⋂ r₀)  -- r₁ = y
-                          -- evalua a y = (⋂ ((⋂ (w \ {(⋂ w)})) \ (⋂ w))) -- w = ⟨ x, y ⟩ = { { x } , { x , y } } , x ≠ y
-    if r₁ = (∅ : U) then
-      ⋂ v₀ -- evalua a x = (⋂ (⋂ w)) -- w = ⟨ x, y ⟩ = { { x } , { x , y } } , x ≠ y
-    else
-      r₁ -- evalua a y
+      let v₀ : U := (⋂ w) -- v₀ = { x }
+      let v : U := { v₀ } -- v = { { x } }
+      let s : U := (w \ v) -- s = { { x , y } }
+      let s₀ : U := (⋂ s) -- s₀ = { x , y }
+      let r₀ : U := (s₀ \ v₀) -- r₀ = { y }
+      let r₁ : U := (⋂ r₀)  -- r₁ = y
+                            -- evalua a y = (⋂ ((⋂ (w \ {(⋂ w)})) \ (⋂ w))) -- w = ⟨ x, y ⟩ = { { x } , { x , y } } , x ≠ y
+      if r₁ = (∅ : U) then
+        ⋂ v₀ -- evalua a x = (⋂ (⋂ w)) -- w = ⟨ x, y ⟩ = { { x } , { x , y } } , x ≠ y
+      else
+        r₁ -- evalua a y
+
+    noncomputable def snd_concept (w : U) : U :=
+      -- Como fst_concept pero para el segundo elemento.
+      if h : ∃ (x y : U), w = (⟨ x , y ⟩  : U) then
+        let uv : U := (Classical.choose h)
+        snd uv
+      else
+        (∅: U) -- convención, debería ser U
 
     @[simp] theorem OrderedPairSet_is_specified (x y : U) :
     ∀ (z : U), z ∈ (⟨ x , y ⟩: U) ↔ (z = ({ x }: U) ∨ z = ({ x , y }: U))
@@ -563,7 +585,19 @@ namespace SetUniverse
     /-! ### Necesitamos unos cuantos lemas para usar en el teroema principal. ### TO DO -/ -- TO DO
     @[simp] theorem OrderedPair_functRet_isOrderedPair_x_eq_y (x y : U) (h_eq : x = y) :
       isOrderedPair_concept (⟨ x , y ⟩ : U)
-        := by sorry
+        := by
+      -- Si x = y, entonces el par ordenado es { { x } , { x , y } } = { { x } , { x } }
+      unfold isOrderedPair_concept
+      unfold OrderedPair
+      rw [h_eq]
+      -- ⟨ x , x ⟩ = { { x } , { x , x } } = { { x } , { x } } = { { x } }
+      -- So we need to show that { { x } } is an ordered pair.
+      -- This means we need to show that ∃ (a b : U), { { x } , { x , x } } = ⟨ a , b ⟩
+      -- We can choose a = x and b = x.
+      exact ⟨x, x, rfl⟩
+
+
+
     -- TO DO: Completar la demostración de este teorema.
 
     @[simp] theorem OrderedPair_functRet_isOrderedPair_x_ne_y (x y : U) (h_ne : x ≠ y) :
