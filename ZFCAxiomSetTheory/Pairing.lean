@@ -586,37 +586,54 @@ namespace SetUniverse
     @[simp] theorem OrderedPair_functRet_isOrderedPair_x_eq_y (x y : U) (h_eq : x = y) :
       isOrderedPair_concept (⟨ x , y ⟩ : U)
         := by
-      -- Si x = y, entonces el par ordenado es { { x } , { x , y } } = { { x } , { x } }
+      -- El objetivo es demostrar: ∃ a b, ⟨ x, y ⟩ = ⟨ a, b ⟩
       unfold isOrderedPair_concept
-      unfold OrderedPair
+      -- Usamos la hipótesis h_eq para simplificar el par ordenado
       rw [h_eq]
-      -- ⟨ x , x ⟩ = { { x } , { x , x } } = { { x } , { x } } = { { x } }
-      -- So we need to show that { { x } } is an ordered pair.
-      -- This means we need to show that ∃ (a b : U), { { x } , { x , x } } = ⟨ a , b ⟩
-      -- We can choose a = x and b = x.
-      exact ⟨x, x, rfl⟩
+      -- Ahora el objetivo es: ∃ a b, ⟨ y, y ⟩ = ⟨ a, b ⟩
+      -- Proporcionamos 'y' y 'y' como los testigos para 'a' y 'b'
+      apply Exists.intro y
+      apply Exists.intro y
+      -- El objetivo se convierte en ⟨ y, y ⟩ = ⟨ y, y ⟩, lo cual es verdadero por reflexividad.
+      rfl
 
-
-
-    -- TO DO: Completar la demostración de este teorema.
-
-    @[simp] theorem OrderedPair_functRet_isOrderedPair_x_ne_y (x y : U) (h_ne : x ≠ y) :
+    @[simp] theorem OrderedPair_functRet_isOrderedPair (x y : U) :
       isOrderedPair_concept (⟨ x , y ⟩ : U)
-        := by sorry
-
-    @[simp] theorem OrderedPair_functRet_isOrderedPair (x y : U):
-        isOrderedPair_concept (⟨ x , y ⟩ : U)
-          := by
-        -- Por casos (h_eq: x=y) o (h_ne: x≠y).
-        by_cases h_eq : x = y
-        · -- Caso x = y
-          exact OrderedPair_functRet_isOrderedPair_x_eq_y x y h_eq
-        · -- Caso x ≠ y
-          exact OrderedPair_functRet_isOrderedPair_x_ne_y x y h_eq
+        := by
+      -- El objetivo es demostrar: ∃ a b, ⟨ x, y ⟩ = ⟨ a, b ⟩
+      unfold isOrderedPair_concept
+      -- Proporcionamos 'x' y 'y' como los testigos para 'a' y 'b'
+      apply Exists.intro x
+      apply Exists.intro y
+      -- El objetivo se convierte en ⟨ x, y ⟩ = ⟨ x, y ⟩, lo cual es verdadero por reflexividad.
+      rfl
 
     -- Demostración de que fst recupera el primer elemento.
-    @[simp] theorem fst_of_ordered_pair (x y : U) : fst ⟨x, y⟩ = x :=
-      by sorry
+    @[simp] theorem fst_of_ordered_pair (x y : U) : fst (⟨x, y⟩ : U) = x
+          := by sorry
+        -- have h_inter_w : (⋂ (⟨x, y⟩ : U)) = {x} := by
+        --   -- Unfold OrderedPair and Intersection_of_pair manually
+        --   unfold OrderedPair
+        --   -- ⟨x, y⟩ = { {x}, {x, y} }
+        --   -- So ⋂ ⟨x, y⟩ = ⋂ { {x}, {x, y} }
+        --   -- By Intersection_of_pair, this is {x} ∩ {x, y} = {x}
+        --   apply ExtSet
+        --   intro z
+        --   constructor
+        --   · intro hz_in_inter
+        --     -- Convert z ∈ ⋂ { {x}, {x, y} } to z ∈ {x} ∩ {x, y}
+        --     have hz_in_bin_inter : z ∈ ({x} ∩ {x, y}) :=
+        --       (Intersection_of_pair {x} {x, y}).symm ▸ hz_in_inter
+        --     -- Now apply BinIntersection_is_specified
+        --     exact (BinIntersection_is_specified {x} {x, y} z).mp hz_in_bin_inter |>.left
+        --   · intro hz_eq_x
+        --     -- z = x → z ∈ {x} ∩ {x, y}
+        --     have hz_in_singleton : z ∈ ({x} : U) := (Singleton_is_specified x z).mpr hz_eq_x
+        --     have hz_in_pair : z ∈ ({x, y} : U) := (PairSet_is_specified x y z).mpr (Or.inl hz_eq_x)
+        --     exact (BinIntersection_is_specified {x} {x, y} z).mpr ⟨hz_in_singleton, hz_in_pair⟩
+        -- have h_inter_inter_w : (⋂ (⋂ (⟨x, y⟩ : U))) = (⋂ {x}) := by rw [h_inter_w]
+        -- rw [h_inter_inter_w, Intersection_of_singleton]
+
 
     -- Demostración de que snd recupera el segundo elemento.
     -- Esta prueba es más compleja porque debe considerar si x = y o no.
