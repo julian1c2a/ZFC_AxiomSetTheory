@@ -16,15 +16,18 @@ namespace SetUniverse
   namespace PairingAxiom
 
     -- Helper: existence proof for an element in a nonempty set
-    @[simp] noncomputable def ExistsAnElementInSet {U : Type u} (w : U) (h : ∃ y, y ∈ w) : ∃ y, y ∈ w := h
+    @[simp]
+    noncomputable def ExistsAnElementInSet {U : Type u} (w : U) (h : ∃ y, y ∈ w) : ∃ y, y ∈ w := h
 
     /-! ### Axioma de Pares (No Ordenados) ### -/
-    @[simp] axiom Pairing (x y : U) :
+    @[simp]
+    axiom Pairing (x y : U) :
       ∃ (z : U), ∀ (w : U), w ∈ z ↔ (w = x ∨ w = y)
 
     /-! ### Teorema de Existencia Única para el Axioma de Pares ### -/
     /-! ### PairingUnique : existe un único conjunto que cumple la especificación {x,y} ### -/
-    @[simp] theorem PairingUniqueSet (x y : U) :
+    @[simp]
+    theorem PairingUniqueSet (x y : U) :
     ∃! (z : U), ∀ (w : U), w ∈ z ↔ (w = x ∨ w = y)
       := by
     apply ExistsUnique.intro (choose (Pairing x y))
@@ -47,16 +50,19 @@ namespace SetUniverse
         exact (hz_pairing w).mpr h_w_in_x_or_y
 
     /-! ### Definición del conjunto especificado por el Axioma de Pares ### -/
-    @[simp] noncomputable def PairSet (x y : U) : U :=
+    @[simp]
+    noncomputable def PairSet (x y : U) : U :=
     choose (PairingUniqueSet x y)
 
-    @[simp] theorem PairSet_is_specified (x y : U) :
+    @[simp]
+    theorem PairSet_is_specified (x y : U) :
     ∀ (z : U), z ∈ PairSet x y ↔ (z = x ∨ z = y)
       := by
     intro z
     exact (choose_spec (PairingUniqueSet x y)).1 z
 
-    @[simp] theorem PairSet_unique (x y : U) (z : U) (hz_pairing : ∀ (w : U), w ∈ z ↔ (w = x ∨ w = y)) :
+    @[simp]
+    theorem PairSet_unique (x y : U) (z : U) (hz_pairing : ∀ (w : U), w ∈ z ↔ (w = x ∨ w = y)) :
     (z = PairSet x y) := by
     apply ExtSet
     intro w
@@ -70,25 +76,28 @@ namespace SetUniverse
 
     notation " { " x ", " y " } " => PairSet x y
 
-    @[simp] noncomputable def Singleton (x : U) : U := { x , x }
+    @[simp]
+    noncomputable def Singleton (x : U) : U := ({ x , x } : U)
 
-    @[simp] theorem Singleton_is_specified (x z : U) :
-    z ∈ Singleton x ↔ (z = x)
-      := by
-    constructor
-    · -- Dirección ->
-      intro hz_in_singleton
-      have h := (PairSet_is_specified x x z).mp hz_in_singleton
-      cases h with
-      | inl h_eq => exact h_eq
-      | inr h_eq => exact h_eq
-    · -- Dirección <-
-      intro hz_eq_x
-      exact (PairSet_is_specified x x z).mpr (Or.inl hz_eq_x)
+    @[simp]
+    theorem Singleton_is_specified (x z : U) :
+      z ∈ Singleton x ↔ (z = x)
+        := by
+      constructor
+      · -- Dirección ->
+        intro hz_in_singleton
+        have h := (PairSet_is_specified x x z).mp hz_in_singleton
+        cases h with
+        | inl h_eq => exact h_eq
+        | inr h_eq => exact h_eq
+      · -- Dirección <-
+        intro hz_eq_x
+        exact (PairSet_is_specified x x z).mpr (Or.inl hz_eq_x)
 
     notation " { " x " } " => Singleton x
 
-    @[simp] theorem Singleton_unique (x : U) (z : U) (hz_singleton : ∀ (w : U), w ∈ z ↔ (w = x)) :
+    @[simp]
+    theorem Singleton_unique (x : U) (z : U) (hz_singleton : ∀ (w : U), w ∈ z ↔ (w = x)) :
     z = { x }
       := by
     apply ExtSet
@@ -101,8 +110,8 @@ namespace SetUniverse
       intro hw_in_singleton
       exact (hz_singleton w).mpr ((Singleton_is_specified x w).mp hw_in_singleton)
 
-
-    @[simp] theorem PairSet_is_nonempty (x y : U) :
+    @[simp]
+    theorem PairSet_is_nonempty (x y : U) :
     PairSet x y ≠ ∅
       := by
     intro h_empty
@@ -112,8 +121,8 @@ namespace SetUniverse
     exfalso
     exact EmptySet_is_empty x h_x_in_pairing
 
-
-    @[simp] theorem PairSet_singleton_is_nonempty (x : U) :
+    @[simp]
+    theorem PairSet_singleton_is_nonempty (x : U) :
     Singleton x ≠ ∅
       := by
     intro h_empty
@@ -124,11 +133,13 @@ namespace SetUniverse
     exact EmptySet_is_empty x h_x_in_singleton
 
     /-! ### Definición de ser miembro (∈) de la Intersección de una Familia de Conjuntos ### -/
-    @[simp] def member_intersection (w v : U) : Prop :=
+    @[simp] def
+    member_intersection (w v : U) : Prop :=
       ∀ (y : U), ( y ∈ w ) → ( v ∈ y )
 
     /-! ### Definición del conjunto Intersección de una Familia de Conjuntos ### -/
-    @[simp] noncomputable def Intersection (w : U) : U :=
+    @[simp]
+    noncomputable def Intersection (w : U) : U :=
     if h : ∃ y, y ∈ w then
       let y₀ := choose h
       SpecSet y₀ (fun v => ∀ y, y ∈ w → v ∈ y)
@@ -138,7 +149,8 @@ namespace SetUniverse
     /-! ### Notación estándar de la Intersección de una Familia de Conjuntos ### -/
     notation " ⋂ " w => Intersection w
 
-    @[simp] lemma nonempty_iff_exists_mem (w : U) : w ≠ ∅ ↔ ∃ y, y ∈ w := by
+    @[simp]
+    lemma nonempty_iff_exists_mem (w : U) : w ≠ ∅ ↔ ∃ y, y ∈ w := by
       calc
         w ≠ ∅ ↔ ¬(∀ y, ¬ (y ∈ w)) := by
           constructor
@@ -165,7 +177,8 @@ namespace SetUniverse
           intro y
           exact not_not
 
-    @[simp] theorem Intersection_is_specified
+    @[simp]
+    theorem Intersection_is_specified
       (w x : U) (h_nonempty : w ≠ ∅) (h_inter_nonempty : ∃ y, y ∈ w) :
       x ∈ (⋂ w) ↔ member_intersection w x
         := by
@@ -198,7 +211,8 @@ namespace SetUniverse
         exact h_inter_def.mpr hx_in_specset
 
     /-! ### Teorema de existencia única del conjunto Intersección ### -/
-    @[simp] theorem Intersection_unique_set (w : U) : w ≠ (∅ : U) → ∃! (z : U), ∀ (v : U), v ∈ z ↔ member_intersection w v
+    @[simp]
+    theorem Intersection_unique_set (w : U) : w ≠ (∅ : U) → ∃! (z : U), ∀ (v : U), v ∈ z ↔ member_intersection w v
         := by
       intro h_nonempty
       have h_exists_y : ∃ y, y ∈ w := (nonempty_iff_exists_mem w).mp h_nonempty
@@ -220,10 +234,11 @@ namespace SetUniverse
           have h_v_mem_inter_w := (Intersection_is_specified w v h_nonempty h_exists_y).mp hv_in_inter_w
           exact (hz_spec v).mpr h_v_mem_inter_w
 
-
     -- Theorem: Intersection is specified by the intersection of a family of sets
     /-! ### Teorema que ∀ (x : U), x ∈ W → ⋂ W ⊆ x ### -/
-    @[simp] theorem Intersection_subset (W x : U) : x ∈ W → (⋂ W) ⊆ x
+    @[simp]
+    theorem Intersection_subset (W x : U) :
+      x ∈ W → (⋂ W) ⊆ x
         := by
       intro hx_in_W z hz_in_intersection
       let h_intersection_nonempty : U → Prop := fun W => ∃ (y : U), y ∈ ((⋂ W) : U)
@@ -233,31 +248,33 @@ namespace SetUniverse
         exact EmptySet_is_empty x hx_in_W
       by_cases h_intersection_nonempty : ∃ (y : U), y ∈ ((⋂ (W : U)) : U)
       case pos =>
-          have h_intersection := choose_spec (Intersection_unique_set W h_nonempty)
-          let h_exists_y := (nonempty_iff_exists_mem W).mp h_nonempty
-          have hz_member_intersection := (Intersection_is_specified W z h_nonempty h_exists_y).mp hz_in_intersection
-          unfold member_intersection at hz_member_intersection
-          exact hz_member_intersection x hx_in_W
+        have h_intersection := choose_spec (Intersection_unique_set W h_nonempty)
+        let h_exists_y := (nonempty_iff_exists_mem W).mp h_nonempty
+        have hz_member_intersection := (Intersection_is_specified W z h_nonempty h_exists_y).mp hz_in_intersection
+        unfold member_intersection at hz_member_intersection
+        exact hz_member_intersection x hx_in_W
       case neg =>
-          -- If the intersection is empty, then it is a subset of any set
-          have h_empty_intersection : ((⋂ (W : U)) : U) = (∅ : U) := by
-            apply ExtSet
-            intro y
-            constructor
-            · intro hy_in_intersection
-              -- If y ∈ ⋂ W, then ∃ y, y ∈ ⋂ W, contradiction
-              exfalso
-              exact h_intersection_nonempty ⟨y, hy_in_intersection⟩
-            · intro hy_in_empty
-              -- y ∈ ∅ is impossible
-              exfalso
-              exact EmptySet_is_empty y hy_in_empty
-          have hz_in_empty : z ∈ ∅ := by rw [←h_empty_intersection]; exact hz_in_intersection
-          exfalso
-          exact EmptySet_is_empty z hz_in_empty
+        -- If the intersection is empty, then it is a subset of any set
+        have h_empty_intersection : ((⋂ (W : U)) : U) = (∅ : U) := by
+          apply ExtSet
+          intro y
+          constructor
+          · intro hy_in_intersection
+            -- If y ∈ ⋂ W, then ∃ y, y ∈ ⋂ W, contradiction
+            exfalso
+            exact h_intersection_nonempty ⟨y, hy_in_intersection⟩
+          · intro hy_in_empty
+            -- y ∈ ∅ is impossible
+            exfalso
+            exact EmptySet_is_empty y hy_in_empty
+        have hz_in_empty : z ∈ ∅ := by rw [←h_empty_intersection]; exact hz_in_intersection
+        exfalso
+        exact EmptySet_is_empty z hz_in_empty
 
     /-! ### Inversión de ser subconjunto W ⊆ V → ⋂V ⊆ ⋂W ### --/
-    @[simp] theorem Intersection_subset_of_superset (W V : U) : ( W ≠ ∅ ∧ V ≠ ∅ ) → ( W ⊆ V → (⋂ V) ⊆ (⋂ W) )
+    @[simp]
+    theorem Intersection_subset_of_superset (W V : U) :
+      ( W ≠ ∅ ∧ V ≠ ∅ ) → ( W ⊆ V → (⋂ V) ⊆ (⋂ W) )
         := by
       intro h_nonempty h_w_subs_v z hz_in_intersection_v
       have h_nonempty_w : W ≠ ∅ := h_nonempty.1
@@ -273,7 +290,8 @@ namespace SetUniverse
       exact (Intersection_is_specified W z h_nonempty_w h_exists_y).mpr hz_member_intersection_w
 
     /-! ### Si un elemento de la familia a interseccionar es vacío, la intersección es vacía ### -/
-    @[simp] theorem Intersection_empty_if_empty (W : U) : (∃ (x : U), x ∈ W ∧ x = ∅) → ((⋂ W) = ∅)
+    @[simp]
+    theorem Intersection_empty_if_empty (W : U) : (∃ (x : U), x ∈ W ∧ x = ∅) → ((⋂ W) = ∅)
         := by
       intro h_exists_empty
       have h_nonempty : W ≠ ∅ := by
@@ -304,7 +322,8 @@ namespace SetUniverse
         exact EmptySet_is_empty z hz_in_empty
 
     /-! ### ⋂{A , B} = A ∩ B ### -/
-    @[simp] theorem Intersection_of_pair (A B : U) : (⋂ { A , B }) = (A ∩ B)
+    @[simp]
+    theorem Intersection_of_pair (A B : U) : (⋂ { A , B }) = (A ∩ B)
         := by
       apply ExtSet
       intro z
@@ -346,7 +365,8 @@ namespace SetUniverse
             | Or.inr h_eq_B => h_eq_B ▸ hz_in_B⟩
 
     /-! ### ⋂{A} = A ### -/
-    @[simp] theorem Intersection_of_singleton (A : U) : (⋂ { A }) = A
+    @[simp]
+    theorem Intersection_of_singleton (A : U) : (⋂ { A }) = A
         := by
       apply ExtSet
       intro z
@@ -372,12 +392,16 @@ namespace SetUniverse
           (h_spec.mp hy_in_singleton) ▸ hz_in_A⟩
 
     /-! ### Definición del Par Ordenado (x,y) = { { x } , { x , y } } ### -/
-    noncomputable def OrderedPair (x y : U) : U := (({ (({ x }): U) , (({ x , y }): U) }): U)
+    @[simp]
+    noncomputable def OrderedPair (x y : U) : U
+        :=
+      (({ (({ x }): U) , (({ x , y }): U) }): U)
 
     /-! ### Notación estándar del Par Ordenado (x,y) = { { x } , { x , y } } ### -/
     notation " ⟨ " x " , " y " ⟩ " => OrderedPair x y
 
-    @[simp] theorem OrderedPair_is_specified (x y : U) :
+    @[simp]
+    theorem OrderedPair_is_specified (x y : U) :
     ∀ (z : U), z ∈ OrderedPair x y ↔ (z = { x } ∨ z = { x , y })
       := by
     intro z
@@ -393,37 +417,38 @@ namespace SetUniverse
       intro hz_eq_x_or_pair
       exact (PairSet_is_specified { x } { x , y } z).mpr hz_eq_x_or_pair
 
-    @[simp] theorem OrderedPair_unique  {z : U} (x y : U) (hz_ordered_pair : ∀ (w : U), w ∈ z ↔ (w = { x } ∨ w = { x , y })) :
-    z = ⟨ x, y ⟩
-      := by
-    apply ExtSet
-    intro w
-    constructor
-    · -- Dirección ->
-      intro hw_in_z
-      exact (OrderedPair_is_specified x y w).mpr ((hz_ordered_pair w).mp hw_in_z)
-    · -- Dirección <-
-      intro hw_in_ordered_pair
-      exact (hz_ordered_pair w).mpr ((OrderedPair_is_specified x y w).mp hw_in_ordered_pair)
-
-    def logic_not_forall_notin (w : U) : Prop :=
-      (¬ (∀ (x : U), x ∉ w)) ↔ (∃ (t : U), t ∈ w)
-
-    def logic_not_exists_in (w : U) : Prop :=
-      (¬ (∃ (x : U), x ∈ w)) ↔ (∀ (t : U), t ∉ w)
+    @[simp]
+    theorem OrderedPair_unique
+      {z : U} (x y : U)
+      (hz_ordered_pair : ∀ (w : U), w ∈ z ↔ (w = { x } ∨ w = { x , y })) :
+      z = ⟨ x, y ⟩
+        := by
+      apply ExtSet
+      intro w
+      constructor
+      · -- Dirección ->
+        intro hw_in_z
+        exact (OrderedPair_is_specified x y w).mpr ((hz_ordered_pair w).mp hw_in_z)
+      · -- Dirección <-
+        intro hw_in_ordered_pair
+        exact (hz_ordered_pair w).mpr ((OrderedPair_is_specified x y w).mp hw_in_ordered_pair)
 
     /-! ### Función que dice (`Prop`) si un conjunto `w` tiene un solo elemento ### -/
+    @[simp]
     def isSingleton_concept (w : U) : Prop :=
       (w ≠ ∅) → (∀ (x : U), x ∈ w → ∀ (y : U), y ∈ w → x = y)
 
+    @[simp]
     def isSingleton (w : U) : Prop :=
       ∀ (t : U), t ∈ w → t = ({ ((⋂ w) : U) } : U)
 
 
     /-! ### Función que dice (`Prop`) si un conjunto `w` tiene dos elementos ### -/
+    @[simp]
     def isPairOfElements_concept (w : U) : Prop :=
       (w ≠ ∅) ∧ (∃ (x y : U), (x ≠ y) ∧ (w = ({ x , y }: U)))
 
+    @[simp]
     def isPairOfElements (w : U) : Prop :=
       if h : ∃ (v : U), v ∈ w then
         let v₁ : U := Classical.choose h
@@ -438,66 +463,76 @@ namespace SetUniverse
         False -- El vacío no tiene elementos (0)
 
     /-! ### Función que dice (`Prop`) si un conjunto `w` es un par ordenado diagonal ### -/
+    @[simp]
     def isDiagonalOrderedPair_concept (w : U) : Prop :=
       (isSingleton_concept w) ∧ (isSingleton_concept (⋂ w))
 
+    @[simp]
     def isDiagonalOrderedPair_concept_2 (w : U) : Prop :=
       ∃ (x : U), w = ({ ({ x }: U) } : U)
 
+    @[simp]
     def isDiagonalOrderedPair_concept_3 (w : U) : Prop :=
       ∃ (x : U), w = ( ⟨ x , x ⟩ : U )
 
+    @[simp]
     def isDiagonalOrderedPair (w : U) : Prop :=
       if h : ∀ (x : U), x ∉ w then
         False -- El vacío no tiene elementos (0)
       else
         if isSingleton w then
-          let v : U := Classical.choose (Classical.not_forall.mp h)
+          let v : U := choose (not_forall.mp h)
           isSingleton v
         else
           False
 
     /-! ### Función que dice (`Prop`) si un conjunto `w` es un par ordenado no diagonal ### -/
+    @[simp]
     def isNonDiagonalOrderedPair_concept (w : U) : Prop :=
       ∃ (x y : U), (x ≠ y) ∧ w = ({ ({ x }: U), ({ x , y }: U) }: U)
 
+    @[simp]
     def isNonDiagonalOrderedPair_concept_2 (w : U) : Prop :=
       ∃ (x y : U), (x ≠ y) ∧ w = (⟨ x , y ⟩ : U)
 
+    @[simp]
     def isNonDiagonalOrderedPair (w : U) : Prop :=
-    if ∀ (x : U), x ∉ w then
-      False -- El vacío no tiene elementos (0)
-    else
-      if isDiagonalOrderedPair w then
-        False -- Caso que es un par ordenado diagonal
+      if ∀ (x : U), x ∉ w then
+        False -- El vacío no tiene elementos (0)
       else
-        if isPairOfElements w then
-          let v : U := {(⋂ w)}
-          let z : U := w \ v
-          if ∃ (t : U), t ∈ v then
-            if ∃ (t : U), t ∈ z then
-              if v ⊂ z then
-                isSingleton (z \ v)
-              else if z ⊂ v then
-                isSingleton (v \ z)
-              else
-                False
-          else
-            False -- Si la intersección es vacía no puede ser un par ordenado
+        if isDiagonalOrderedPair w then
+          False -- Caso que es un par ordenado diagonal
         else
-          False -- Caso que no son dos elementos (no es un par ordenado)
-      else
-        False -- Caso que no es un par ordenado (no es un par ordenado diagonal o no diagonal)
+          if isPairOfElements w then
+            let v : U := {(⋂ w)}
+            let z : U := w \ v
+            if ∃ (t : U), t ∈ v then
+              if ∃ (t : U), t ∈ z then
+                if v ⊂ z then
+                  isSingleton (z \ v)
+                else if z ⊂ v then
+                  isSingleton (v \ z)
+                else
+                  False
+            else
+              False -- Si la intersección es vacía no puede ser un par ordenado
+          else
+            False -- Caso que no son dos elementos (no es un par ordenado)
+        else
+          False -- Caso que no es un par ordenado (no es un par ordenado diagonal o no diagonal)
 
     /-! ### Función que dice (`Prop`) si un conjunto `w` es un par ordenado ### -/
+    @[simp]
     def isOrderedPair_concept (w : U) : Prop :=
       ∃ (x y : U), w = (⟨ x , y ⟩  : U)
 
+    @[simp]
     def isOrderedPair (w : U) : Prop :=
       isDiagonalOrderedPair w ∨ isNonDiagonalOrderedPair w
 
     /-! ### Teorema de que un par ordenado es un conjunto no vacío ### -/
-    @[simp] theorem OrderedPair_is_nonempty (x y : U) :
+    @[simp]
+    theorem OrderedPair_is_nonempty (x y : U) :
       ⟨ x, y ⟩  ≠ (∅: U)
         := by
       intro h_empty
@@ -509,7 +544,8 @@ namespace SetUniverse
       exfalso
       exact EmptySet_is_empty {x} h_singleton_x_in_pair
 
-    @[simp] theorem IntersectionOrderedPair_is_nonempty (x y : U) :
+    @[simp]
+    theorem IntersectionOrderedPair_is_nonempty (x y : U) :
       (⋂ (⟨ x , y ⟩)) ≠ (∅: U)
         := by
       intro h_empty
@@ -540,8 +576,10 @@ namespace SetUniverse
       have h_singleton_nonempty := PairSet_singleton_is_nonempty x
       exact h_singleton_nonempty h_empty
 
+    @[simp]
     noncomputable def fst (w : U) : U := (⋂ (⋂ w))
 
+    @[simp]
     noncomputable def fst_concept (w : U) : U :=
       if h : ∃ (v₀ : U), v₀ ∈ w then
         let u₀ : U := Classical.choose h
@@ -549,41 +587,48 @@ namespace SetUniverse
       else
         (∅: U) -- convención, debería ser U
 
+    @[simp]
     noncomputable def snd (w : U) : U :=
-      let v₀ : U := (⋂ w) -- v₀ = { x }
-      let v : U := { v₀ } -- v = { { x } }
-      let s : U := (w \ v) -- s = { { x , y } }
-      let s₀ : U := (⋂ s) -- s₀ = { x , y }
-      let r₀ : U := (s₀ \ v₀) -- r₀ = { y }
-      let r₁ : U := (⋂ r₀)  -- r₁ = y
-                            -- evalua a y = (⋂ ((⋂ (w \ {(⋂ w)})) \ (⋂ w))) -- w = ⟨ x, y ⟩ = { { x } , { x , y } } , x ≠ y
-      if r₁ = (∅ : U) then
-        ⋂ v₀ -- evalua a x = (⋂ (⋂ w)) -- w = ⟨ x, y ⟩ = { { x } , { x , y } } , x ≠ y
-      else
-        r₁ -- evalua a y
+      let I := ⋂ w -- Esto es {x}
+      let s := w \ {I} -- Esto es {{x, y}} si x≠y, y es ∅ si x=y
+      if h : s = ∅ then -- Esta condición ahora distingue perfectamente el caso diagonal
+        ⋂ I -- Si s es vacío, x=y, así que devolvemos x (que es y)
+      else -- Si s no es vacío, entonces x≠y
+        -- 's' no es vacío, así que podemos tomar su único elemento, que es {x,y}
+        have h_exists : ∃ y, y ∈ s := (nonempty_iff_exists_mem s).mp h
+        let s_elem := choose h_exists
+        -- A {x,y} le quitamos {x}, lo que nos deja {y}
+        let r := s_elem \ I
+        -- La intersección de {y} es y
+        ⋂ r
 
+    @[simp]
     noncomputable def snd_concept (w : U) : U :=
       -- Como fst_concept pero para el segundo elemento.
       if h : ∃ (x y : U), w = (⟨ x , y ⟩  : U) then
-        let uv : U := (Classical.choose h)
+        let uv : U := (choose h)
         snd uv
       else
         (∅: U) -- convención, debería ser U
 
-    @[simp] theorem OrderedPairSet_is_specified (x y : U) :
-    ∀ (z : U), z ∈ (⟨ x , y ⟩: U) ↔ (z = ({ x }: U) ∨ z = ({ x , y }: U))
-      := by
-    intro z
-    exact OrderedPair_is_specified x y z
+    @[simp]
+    theorem OrderedPairSet_is_specified (x y : U) :
+      ∀ (z : U), z ∈ (⟨ x , y ⟩: U) ↔ (z = ({ x }: U) ∨ z = ({ x , y }: U))
+        := by
+      intro z
+      exact OrderedPair_is_specified x y z
 
-    @[simp] theorem OrderedPairSet_unique (x y : U) (z : U)
-    (hz_ordered_pair : ∀ (w : U), w ∈ z ↔ (w = ({ x }: U) ∨ w = ({ x , y }: U))) :
-    z = ⟨ x, y ⟩
-      := by
-    apply OrderedPair_unique x y hz_ordered_pair
+    @[simp]
+    theorem OrderedPairSet_unique
+        (x y z : U)
+        (hz_ordered_pair : ∀ (w : U), w ∈ z ↔ (w = ({ x }: U) ∨ w = ({ x , y }: U))) :
+      z = ⟨ x, y ⟩
+        := by
+      apply OrderedPair_unique x y hz_ordered_pair
 
     /-! ### Necesitamos unos cuantos lemas para usar en el teroema principal. ### TO DO -/ -- TO DO
-    @[simp] theorem OrderedPair_functRet_isOrderedPair_x_eq_y (x y : U) (h_eq : x = y) :
+    @[simp]
+    theorem OrderedPair_functRet_isOrderedPair_x_eq_y (x y : U) (h_eq : x = y) :
       isOrderedPair_concept (⟨ x , y ⟩ : U)
         := by
       -- El objetivo es demostrar: ∃ a b, ⟨ x, y ⟩ = ⟨ a, b ⟩
@@ -597,7 +642,8 @@ namespace SetUniverse
       -- El objetivo se convierte en ⟨ y, y ⟩ = ⟨ y, y ⟩, lo cual es verdadero por reflexividad.
       rfl
 
-    @[simp] theorem OrderedPair_functRet_isOrderedPair (x y : U) :
+    @[simp]
+    theorem OrderedPair_functRet_isOrderedPair (x y : U) :
       isOrderedPair_concept (⟨ x , y ⟩ : U)
         := by
       -- El objetivo es demostrar: ∃ a b, ⟨ x, y ⟩ = ⟨ a, b ⟩
@@ -609,41 +655,45 @@ namespace SetUniverse
       rfl
 
     -- Demostración de que fst recupera el primer elemento.
-    @[simp] theorem fst_of_ordered_pair (x y : U) : fst (⟨x, y⟩ : U) = x
-          := by sorry
-        -- have h_inter_w : (⋂ (⟨x, y⟩ : U)) = {x} := by
-        --   -- Unfold OrderedPair and Intersection_of_pair manually
-        --   unfold OrderedPair
-        --   -- ⟨x, y⟩ = { {x}, {x, y} }
-        --   -- So ⋂ ⟨x, y⟩ = ⋂ { {x}, {x, y} }
-        --   -- By Intersection_of_pair, this is {x} ∩ {x, y} = {x}
-        --   apply ExtSet
-        --   intro z
-        --   constructor
-        --   · intro hz_in_inter
-        --     -- Convert z ∈ ⋂ { {x}, {x, y} } to z ∈ {x} ∩ {x, y}
-        --     have hz_in_bin_inter : z ∈ ({x} ∩ {x, y}) :=
-        --       (Intersection_of_pair {x} {x, y}).symm ▸ hz_in_inter
-        --     -- Now apply BinIntersection_is_specified
-        --     exact (BinIntersection_is_specified {x} {x, y} z).mp hz_in_bin_inter |>.left
-        --   · intro hz_eq_x
-        --     -- z = x → z ∈ {x} ∩ {x, y}
-        --     have hz_in_singleton : z ∈ ({x} : U) := (Singleton_is_specified x z).mpr hz_eq_x
-        --     have hz_in_pair : z ∈ ({x, y} : U) := (PairSet_is_specified x y z).mpr (Or.inl hz_eq_x)
-        --     exact (BinIntersection_is_specified {x} {x, y} z).mpr ⟨hz_in_singleton, hz_in_pair⟩
-        -- have h_inter_inter_w : (⋂ (⋂ (⟨x, y⟩ : U))) = (⋂ {x}) := by rw [h_inter_w]
-        -- rw [h_inter_inter_w, Intersection_of_singleton]
-
+    @[simp]
+    theorem fst_of_ordered_pair (x y : U) :
+      fst (⟨x, y⟩ : U) = x
+        := by
+      unfold fst
+      -- El objetivo es: (⋂ (⋂ ⟨x, y⟩)) = x
+      -- Paso 1: Demostrar que ⋂ ⟨x, y⟩ = {x}
+      have h_inter_w : (⋂ ⟨x, y⟩) = {x} := by
+        rw [OrderedPair, Intersection_of_pair, BinIntersection_with_subseteq_full]
+        -- Para usar BinIntersection_with_subseteq_full, debemos probar que {x} ⊆ {x, y}
+        intro z hz_in_singleton
+        have hz_eq_x := (Singleton_is_specified x z).mp hz_in_singleton
+        exact (PairSet_is_specified x y z).mpr (Or.inl hz_eq_x)
+      -- Paso 2: Sustituir y usar el teorema de la intersección de un singleton
+      rw [h_inter_w, Intersection_of_singleton]
 
     -- Demostración de que snd recupera el segundo elemento.
     -- Esta prueba es más compleja porque debe considerar si x = y o no.
-    @[simp] theorem snd_of_ordered_pair (x y : U) : snd ⟨x, y⟩ = y :=
-      by sorry
+    @[simp]
+    theorem snd_of_ordered_pair (x y : U) : snd ⟨x, y⟩ = y
+        := by sorry
 
     -- El teorema principal que une todo.
-    @[simp] theorem OrderedPairSet_is_WellConstructed (w : U) :
-      (isOrderedPair w) → w = (⟨ fst w, snd w ⟩ : U) :=
-      by sorry
+    @[simp]
+    theorem OrderedPairSet_is_WellConstructed (w : U) :
+      (isOrderedPair w) → w = (⟨ fst w, snd w ⟩ : U)
+        := by
+      intro h
+      -- Usamos la hipótesis h para simplificar el par ordenado
+      unfold isOrderedPair at h
+      cases h with
+      | inl h_diag =>
+        -- Caso diagonal
+        -- TODO: Demostrar w = ⟨ fst w, snd w ⟩ para el caso diagonal
+        sorry
+      | inr h_nondiag =>
+        -- Caso no diagonal
+        -- TODO: Demostrar w = ⟨ fst w, snd w ⟩ para el caso no diagonal
+        sorry
 
     /-! ### Relaciones y Funciones: Inyectividad, Sobreyectividad, Equivalencia y Orden ### -/
 

@@ -35,30 +35,33 @@ namespace SetUniverse
         rw [← h_eq] at hz_in_y
         exact hz_in_y
 
-    @[simp] theorem ExtSet_wc {x y : U}
+    @[simp]
+    theorem ExtSet_wc {x y : U}
       (h_x_subs_y: ∀ (z: U), z ∈ x → z ∈ y)
       (h_y_subs_x: ∀ (z: U), z ∈ y → z ∈ x) :
-      (x = y)
-        := by
-      apply ExtSet
-      intro z
-      constructor
-      · -- Dirección ->
-        apply h_x_subs_y
-      · -- Dirección <-
-        apply h_y_subs_x
+        (x = y)
+          := by
+        apply ExtSet
+        intro z
+        constructor
+        · -- Dirección ->
+          apply h_x_subs_y
+        · -- Dirección <-
+          apply h_y_subs_x
 
     /-! ### Subconjunto (no estricto) ### -/
-    @[simp] def subseteq (x y : U) : Prop :=
-      ∀ (z: U), z ∈ x → z ∈ y --
+    @[simp]
+    def subseteq (x y : U) : Prop :=
+      ∀ (z: U), z ∈ x → z ∈ y
 
     /-! ### Notación estándar de subconjunto (no estricto) ### -/
     notation:50 lhs:51 " ⊆ " rhs:51 => subseteq lhs rhs
 
     /-! ### Subconjunto propio ### -/
     /-! ### Subset : x ⊆ y ∧ x ≠ y ### -/
-    @[simp] def subset (x y : U) : Prop :=
-      subseteq x y ∧ (x ≠ y)
+    @[simp]
+    def subset (x y : U) : Prop :=
+      (subseteq x y) ∧ (x ≠ y)
 
     /-! ### Notación estándar de subconjunto propio ### -/
     notation:50 lhs:51 " ⊂ " rhs:51 => subset lhs rhs
@@ -69,7 +72,8 @@ namespace SetUniverse
     notation:50 lhs:51 " ⊃ " rhs:51 => subset rhs lhs
 
     /-! ### Teorema de igualdad de conjuntos a través de ser subconjunto uno de otro ### -/
-    @[simp] theorem EqualityOfSubset (x y : U) :
+    @[simp]
+    theorem EqualityOfSubset (x y : U) :
       (x ⊆ y) → (y ⊆ x) → (x = y)
         := by
       intro h_xy h_yx
@@ -80,24 +84,36 @@ namespace SetUniverse
       · apply h_yx
 
     /-! ### 'U' es un Orden Parcial por '⊆' ### -/
-    @[simp] theorem subseteq_reflexive : ∀ (x : U), x ⊆ x := by
+    @[simp]
+    theorem subseteq_reflexive :
+      ∀ (x : U), x ⊆ x
+        := by
       intro x z h_mem
       exact h_mem
 
-    @[simp] theorem subseteq_transitive : ∀ (x y z : U), x ⊆ y → y ⊆ z → x ⊆ z := by
+    @[simp]
+    theorem subseteq_transitive :
+      ∀ (x y z : U), x ⊆ y → y ⊆ z → x ⊆ z
+        := by
       intro x y z h_xy h_yz
       intro w h_w_in_x
       apply h_yz
       apply h_xy
       exact h_w_in_x
 
-    @[simp] theorem subseteq_antisymmetric : ∀ (x y : U), x ⊆ y → y ⊆ x → x = y := by
+    @[simp]
+    theorem subseteq_antisymmetric :
+      ∀ (x y : U), x ⊆ y → y ⊆ x → x = y
+        := by
       intro x y h_xy h_yx
       apply EqualityOfSubset
       exact h_xy
       exact h_yx
 
-    @[simp] theorem subset_asymmetric : ∀ (x y : U), x ⊂ y → ¬(y ⊂ x) := by
+    @[simp]
+    theorem subset_asymmetric :
+      ∀ (x y : U), x ⊂ y → ¬(y ⊂ x)
+        := by
       intro x y h_subs
       intro h_subs_reverse
       apply h_subs.2
@@ -105,12 +121,17 @@ namespace SetUniverse
       exact h_subs.1
       exact h_subs_reverse.1
 
-    @[simp] theorem subset_irreflexive : ∀ (x : U), ¬(x ⊂ x) := by
+    @[simp]
+    theorem subset_irreflexive :
+      ∀ (x : U), ¬(x ⊂ x)
+        := by
       intro x h_subs
       apply h_subs.2
       rfl
 
-    @[simp] theorem subset_transitive : ∀ (x y z : U), x ⊂ y → y ⊂ z → x ⊂ z := by
+    @[simp] theorem subset_transitive :
+      ∀ (x y z : U), x ⊂ y → y ⊂ z → x ⊂ z
+        := by
       intro x y z h_subs_xy h_subs_yz
       constructor
       · apply subseteq_transitive
@@ -124,22 +145,27 @@ namespace SetUniverse
         exact h_subs_yz.1
 
     /-! ### Definición de Conjuntos Disjuntos ### -/
-    @[simp] def disjoint (x y : U) : Prop :=
+    @[simp]
+    def disjoint (x y : U) : Prop :=
       ∀ z, z ∈ x → z ∉ y
 
     /-! ### Notación estándar de conjuntos disjuntos ### -/
     notation:50 lhs:51 " ⟂ " rhs:51 => disjoint lhs rhs
 
     /-! ### Simetría de los Conjuntos Disjuntos ### -/
-    @[simp] theorem disjoint_symm (x y : U) :
-      (x ⟂ y) → (y ⟂ x) := by
+    @[simp]
+    theorem disjoint_symm (x y : U) :
+      (x ⟂ y) → (y ⟂ x)
+        := by
       intro h_disj z h_z_in_y h_z_in_x
       apply h_disj z h_z_in_x
       exact h_z_in_y
 
     /-! ### Teorema de conjuntos disjuntos (todavía sin notación estándar) ### -/
-    @[simp] theorem disjoint_is_empty (x y : U) :
-      (x ⟂ y) → (∃ z : U, z ∈ x ∧ z ∈ y) → False := by
+    @[simp]
+    theorem disjoint_is_empty (x y : U) :
+      (x ⟂ y) → (∃ z : U, z ∈ x ∧ z ∈ y) → False
+        := by
       intro h_disj h_exists
       cases h_exists with
       | intro z h_z_both =>
@@ -147,20 +173,27 @@ namespace SetUniverse
         exact h_z_both.1
         exact h_z_both.2
 
-    @[simp] theorem disjoint_is_empty_wc {x y : U} (h_exists :  ∃ (z : U), z ∈ x ∧ z ∈ y) :
-      ¬(x ⟂ y) := by
+    @[simp]
+    theorem disjoint_is_empty_wc {x y : U} (h_exists :  ∃ (z : U), z ∈ x ∧ z ∈ y) :
+      ¬(x ⟂ y)
+        := by
       intro h_disj
       apply disjoint_is_empty
       exact h_disj
       exact h_exists
 
-
     /-! ### Propiedades de la relación de Subconjunto Propio ### -/
-    @[simp] theorem subset_subseteq (x y : U) : x ⊂ y → x ⊆ y := by
+    @[simp]
+    theorem subset_subseteq (x y : U) :
+      x ⊂ y → x ⊆ y
+        := by
       intro h_subs
       exact h_subs.1
 
-    @[simp] theorem subseteq_subset_or_eq (x y : U) : x ⊆ y → (x ⊂ y ∨ x = y) := by
+    @[simp]
+    theorem subseteq_subset_or_eq (x y : U) :
+      x ⊆ y → (x ⊂ y ∨ x = y)
+        := by
       intro h_subs
       by_cases h_eq : x = y
       · -- Caso x = y
@@ -172,7 +205,10 @@ namespace SetUniverse
         · exact h_subs
         · exact h_eq
 
-    @[simp] theorem subset_asymmetric' (x y : U) : (x ⊆ y) → ¬(y ⊂ x) := by
+    @[simp]
+    theorem subset_asymmetric' (x y : U) :
+      (x ⊆ y) → ¬(y ⊂ x)
+        := by
       intro h_subs
       by_cases h_eq : x = y
       · -- Caso x = y
@@ -186,7 +222,10 @@ namespace SetUniverse
         exact h_subs_reverse.1
         exact h_subs
 
-    @[simp] theorem subset_transitive' (x y z : U) : (x ⊆ y) → (y ⊂ z) → (x ⊂ z) := by
+    @[simp]
+    theorem subset_transitive' (x y z : U) :
+      (x ⊆ y) → (y ⊂ z) → (x ⊂ z)
+        := by
       intro h_subs_xy h_subs_yz
       constructor
       · apply subseteq_transitive
@@ -199,7 +238,10 @@ namespace SetUniverse
         rw [← h_eq]
         exact h_subs_xy
 
-    @[simp] theorem subset_transitive'' (x y z : U) : (x ⊂ y) → (y ⊆ z) → (x ⊂ z) := by
+    @[simp]
+    theorem subset_transitive'' (x y z : U) :
+      (x ⊂ y) → (y ⊆ z) → (x ⊂ z)
+        := by
       intro h_subs_xy h_subs_yz
       constructor
       · apply subseteq_transitive
@@ -212,37 +254,48 @@ namespace SetUniverse
         rw [h_eq]
         exact h_subs_yz
 
-    @[simp] noncomputable def isTransitiveSet (x : U) : Prop :=
+    @[simp]
+    noncomputable def isTransitiveSet (x : U) : Prop :=
       ∀ (y : U), (y ∈ x) → (y ⊂ x)
 
-    @[simp] noncomputable def isEmpty (x : U) : Prop :=
+    @[simp]
+    noncomputable def isEmpty (x : U) : Prop :=
       ∀ y, y ∉ x
 
-    @[simp] noncomputable def isNonEmpty (x : U) : Prop :=
+    @[simp]
+    noncomputable def isNonEmpty (x : U) : Prop :=
       ∃ y, y ∈ x
 
-    @[simp] noncomputable def isSingleton (x : U) : Prop :=
+    @[simp]
+    noncomputable def isSingleton (x : U) : Prop :=
       ∃ y, ∀ z, z ∈ x → z = y
 
-    @[simp] noncomputable def isPair (x : U) : Prop :=
+    @[simp]
+    noncomputable def isPair (x : U) : Prop :=
       ∃ y z, ∀ w, w ∈ x → (w = y ∨ w = z)
 
-    @[simp] noncomputable def isBinIntersection (x y s: U) : Prop :=
+    @[simp]
+    noncomputable def isBinIntersection (x y s: U) : Prop :=
       ∀ z, z ∈ x ↔ (z ∈ y ∧ z ∈ s)
 
-    @[simp] noncomputable def isBinUnion (x y s: U) : Prop :=
+    @[simp]
+    noncomputable def isBinUnion (x y s: U) : Prop :=
       ∀ z, z ∈ x ↔ (∃ t, t ∈ y ∧ z ∈ t) ∧ (z ∈ s)
 
-    @[simp] noncomputable def isBinDiff (x y s: U) : Prop :=
+    @[simp]
+    noncomputable def isBinDiff (x y s: U) : Prop :=
       ∀ z, z ∈ x ↔ (z ∈ y ∧ ¬(z ∈ s))
 
-    @[simp] noncomputable def isBinSymDiff (x y s: U) : Prop :=
+    @[simp]
+    noncomputable def isBinSymDiff (x y s: U) : Prop :=
       ∀ z, z ∈ x ↔ (z ∈ y ∧ z ∉ s) ∨ (z ∉ y ∧ z ∈ s)
 
-    @[simp] noncomputable def isUnion (x X: U) : Prop :=
+    @[simp]
+    noncomputable def isUnion (x X: U) : Prop :=
       ∀ (z : U), z ∈ X ↔ ∃ (y : U), z ∈ y ∧ y ∈ x
 
-    @[simp] noncomputable def isIntersection (x X: U) : Prop :=
+    @[simp]
+    noncomputable def isIntersection (x X: U) : Prop :=
       ∀ (z: U), z ∈ X ↔ ∀ (y: U), y ∈ x → z ∈ y
 
   end ExtensionAxiom

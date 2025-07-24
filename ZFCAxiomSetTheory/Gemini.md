@@ -1,4 +1,4 @@
-Claro. Demostrar el teorema `OrderedPairSet_is_WellConstructed` es un paso fundamental en la teoría de conjuntos, ya que confirma que las funciones `fst` (primera coordenada) y `snd` (segunda coordenada) recuperan correctamente los elementos originales de un par ordenado.
+Demostrar el teorema `OrderedPairSet_is_WellConstructed` es un paso fundamental en la teoría de conjuntos, ya que confirma que las funciones `fst` (primera coordenada) y `snd` (segunda coordenada) recuperan correctamente los elementos originales de un par ordenado.
 
 La estrategia para demostrar `(isOrderedPair w) → w = ⟨fst w, snd w⟩` es la siguiente:
 
@@ -31,6 +31,7 @@ noncomputable def snd (w : U) : U :=
     ⋂ r
 ```
 
+**Nota**: La definición `snd` *FUNCIONA PERFECTAMENTE*
 -----
 
 ### 2\. Pruebas para los Lemas `fst` y `snd`
