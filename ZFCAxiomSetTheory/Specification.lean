@@ -336,23 +336,33 @@ namespace SetUniverse
       exact h_both.1
 
     @[simp]
-    theorem Difference_with_superseteq (x : U) {y : U} (h_x_superseteq_y : x ⊆ y) :
-      (x \ y) = ∅
-        := by
-      apply ExtSet
-      intro z
+    theorem Difference_empty_iff_subseteq (x y : U) :
+      (x \ y) = ∅ ↔ x ⊆ y := by
       constructor
-      · -- Dirección ->
-        intro h_z_in_difference
-        have h_difference := Difference_is_specified x y z
-        have h_both := h_difference.mp h_z_in_difference
-        have h_z_in_x : z ∈ x := h_both.1
-        have h_z_not_in_y : z ∉ y := h_both.2
-        have h_z_in_y : z ∈ y := h_x_superseteq_y z h_z_in_x
-        exact False.elim (h_z_not_in_y h_z_in_y)
+      · -- Dirección: (x \ y) = ∅ → x ⊆ y
+        intro h_empty_diff z h_z_in_x
+        -- Queremos demostrar z ∈ y. Usaremos una prueba por contradicción.
+        -- Esto es el equivalente en Lean 4 puro de `by_contra h_z_notin_y`.
+        apply Classical.byContradiction
+        intro h_z_notin_y
+        -- Ahora tenemos `h_z_notin_y : z ∉ y` y el objetivo es `False`.
+        have h_in_diff : z ∈ (x \ y) := (Difference_is_specified x y z).mpr ⟨h_z_in_x, h_z_notin_y⟩
+        rw [h_empty_diff] at h_in_diff
+        exact EmptySet_is_empty z h_in_diff
       · -- Dirección <-
-        intro h_z_in_empty
-        exact False.elim (EmptySet_is_empty z h_z_in_empty)
+        intro h_subset
+        apply ExtSet
+        intro z
+        rw [Difference_is_specified]
+        -- Membership in the empty set is always false
+        have h_empty : ∀ x, x ∈ (∅ : U) → False := EmptySet_is_empty
+        constructor
+        · intro h_in_diff
+          have h_z_in_y := h_subset z h_in_diff.left
+          -- h_in_diff.right h_z_in_y is False, so z ∈ ∅ is impossible
+          exact False.elim (h_in_diff.right h_z_in_y)
+        · intro h_false
+          exact False.elim (EmptySet_is_empty z h_false)
 
     @[simp]
     theorem Difference_with_empty (x : U) :
@@ -368,7 +378,7 @@ namespace SetUniverse
         exact h_both.1
       · -- Dirección <-
         intro h_z_in_x
-        exact (Difference_is_specified x ∅ z).mpr ⟨h_z_in_x, EmptySet_is_empty z⟩
+        exact (Difference_is_specified x ∅ z).mpr ⟨h_z_in_x, fun h_z_in_y => EmptySet_is_empty z h_z_in_y⟩
 
     @[simp]
     theorem Difference_self_empty (x : U) :
@@ -419,6 +429,7 @@ export SetUniverse.SpecificationAxiom (
     BinIntersection_with_subseteq BinIntersection_with_subseteq_full
     BinIntersection_with_empty BinIntersection_idempotence
     Difference Difference_is_specified DifferenceUniqueSet
-    Difference_subset Difference_with_superseteq Difference_with_empty
+    Difference_subset Difference_with_empty
     Difference_self_empty Difference_disjoint
+    Difference_empty_iff_subseteq
 )

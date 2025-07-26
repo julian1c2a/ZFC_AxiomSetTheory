@@ -55,11 +55,10 @@ namespace SetUniverse
     choose (PairingUniqueSet x y)
 
     @[simp]
-    theorem PairSet_is_specified (x y : U) :
-    ∀ (z : U), z ∈ PairSet x y ↔ (z = x ∨ z = y)
-      := by
-    intro z
-    exact (choose_spec (PairingUniqueSet x y)).1 z
+    theorem PairSet_is_specified (x y z : U) :
+      z ∈ PairSet x y ↔ (z = x ∨ z = y)
+        := by
+      exact (choose_spec (PairingUniqueSet x y)).1 z
 
     @[simp]
     theorem PairSet_unique (x y : U) (z : U) (hz_pairing : ∀ (w : U), w ∈ z ↔ (w = x ∨ w = y)) :
@@ -80,19 +79,60 @@ namespace SetUniverse
     noncomputable def Singleton (x : U) : U := ({ x , x } : U)
 
     @[simp]
-    theorem Singleton_is_specified (x z : U) :
-      z ∈ Singleton x ↔ (z = x)
+    theorem Difference_is_empty_mp (A B : U) :
+      ((A \ B) = (∅ : U)) → ∀ x, x ∈ A → x ∈ B
+        := by
+      let h : Prop := (A \ B) = (∅ : U)
+      let hx_notin_B : U → Prop := fun z => ¬ (z ∈ B)
+      let hx_in_A : U → Prop := fun y => (y ∈ A)
+      let hx_in_diff : U → Prop := fun x => (x ∈ ((A \ B) : U))
+      intro h x
+      intro hx_in_Ax
+      -- Suppose for contradiction that x ∈ (A \ B)
+      have hx_in_diff : x ∈ ((A \ B) : U) := ⟨hx_in_Ax, fun hB => by
+        -- x ∈ A and ¬(x ∈ B)
+        exact hB
+      ⟩
+      -- But h : (A \ B) = ∅, so x ∈ (A \ B) implies x ∈ ∅, contradiction
+      rw [h] at hx_in_diff
+      exact EmptySet_is_empty x hx_in_diff
+
+    @[simp]
+    theorem Difference_is_empty_mpr (A B : U) :
+      (∀ x, x ∈ A → x ∈ B) → ((A \ B) = (∅ : U))
+        := by sorry
+
+    @[simp]
+    theorem Singleton_is_specified (w z : U) :
+      z ∈ w ↔ ( ( w \ ( (Singleton z) : U) ) : U) = (∅ : U)
         := by
       constructor
       · -- Dirección ->
-        intro hz_in_singleton
-        have h := (PairSet_is_specified x x z).mp hz_in_singleton
-        cases h with
-        | inl h_eq => exact h_eq
-        | inr h_eq => exact h_eq
+        intro hw_in_w
+        unfold Singleton at hw_in_w
+        have h := (PairSet_is_specified z z z).mpr (Or.inl rfl)
+        exact (Difference_is_empty w ({z} : U)).mpr (by
+          apply ExtSet
+          intro v
+          constructor
+          · intro hv_in_w
+            exact (Singleton_is_specified z v).mp hv_in_w
+          · intro hv_in_empty
+            exact EmptySet_is_empty v hv_in_empty)
       · -- Dirección <-
-        intro hz_eq_x
-        exact (PairSet_is_specified x x z).mpr (Or.inl hz_eq_x)
+        intro hw_in_singleton
+        unfold Singleton
+        have h := (PairSet_is_specified z z w).mpr (Or.inl rfl)
+        exact h.symm ▸ (Difference_is_empty w ({z} : U)).mpr (by
+          apply ExtSet
+          intro v
+          constructor
+          · intro hv_in_w
+            exact (Singleton_is_specified z v).mp hv_in_w
+          · intro hv_in_empty
+            exact EmptySet_is_empty v hv_in_empty)
+
+
 
     notation " { " x " } " => Singleton x
 
@@ -663,19 +703,100 @@ namespace SetUniverse
       -- El objetivo es: (⋂ (⋂ ⟨x, y⟩)) = x
       -- Paso 1: Demostrar que ⋂ ⟨x, y⟩ = {x}
       have h_inter_w : (⋂ ⟨x, y⟩) = {x} := by
-        rw [OrderedPair, Intersection_of_pair, BinIntersection_with_subseteq_full]
-        -- Para usar BinIntersection_with_subseteq_full, debemos probar que {x} ⊆ {x, y}
-        intro z hz_in_singleton
-        have hz_eq_x := (Singleton_is_specified x z).mp hz_in_singleton
-        exact (PairSet_is_specified x y z).mpr (Or.inl hz_eq_x)
+        rw [OrderedPair, Intersection_of_pair] -- Simplificamos el objetivo a ({x} ∩ {x, y}) = {x}
+        apply ExtSet
+        intro z
+        constructor
+        · -- Dirección ->
+          intro hz_in_inter
+          rw [BinIntersection_is_specified, Singleton_is_specified, PairSet_is_specified] at hz_in_inter
+          -- hz_in_inter : z ∈ {x} ∧ z ∈ {x, y}
+          exact (Singleton_is_specified x z).mpr hz_in_inter.left
+        · -- Dirección <-
+          intro hz_eq_x
+          rw [BinIntersection_is_specified, Singleton_is_specified, PairSet_is_specified]
+          constructor
+          · exact (Singleton_is_specified x z).mp hz_eq_x
+          · exact Or.inl ((Singleton_is_specified x z).mp hz_eq_x)
       -- Paso 2: Sustituir y usar el teorema de la intersección de un singleton
       rw [h_inter_w, Intersection_of_singleton]
 
-    -- Demostración de que snd recupera el segundo elemento.
-    -- Esta prueba es más compleja porque debe considerar si x = y o no.
-    @[simp]
-    theorem snd_of_ordered_pair (x y : U) : snd ⟨x, y⟩ = y
-        := by sorry
+  -- Demostración de que snd recupera el segundo elemento.
+  -- Esta prueba es más compleja porque debe considerar si x = y o no.
+
+  theorem snd_of_ordered_pair (x y : U) :
+    snd ⟨x, y⟩ = y
+      := by
+    unfold snd
+    by_cases h_eq : x = y
+    -- Caso 1: x = y
+    ·
+      -- In this case, I = ⋂ ⟨y, y⟩ = {y}, s = ⟨y, y⟩ \ {{y}} = ∅, so snd ⟨y, y⟩ = ⋂ I = ⋂ {y} = y
+      have h_I : (⋂ ⟨y, y⟩) = {y} := by
+        rw [OrderedPair, Intersection_of_pair]
+        apply ExtSet
+        intro z
+        constructor
+        · intro hz
+          rw [BinIntersection_is_specified, Singleton_is_specified, PairSet_is_specified] at hz
+          exact (Singleton_is_specified y z).mpr hz.left
+        · intro hz_eq_y
+          rw [BinIntersection_is_specified, Singleton_is_specified, PairSet_is_specified]
+          constructor
+          · exact (Singleton_is_specified y z).mp hz_eq_y
+          · exact Or.inl ((Singleton_is_specified y z).mp hz_eq_y)
+      have h_s : ((⟨y, y⟩ : U) \ ({({y} : U)} : U)) = (∅ : U) := by
+        unfold OrderedPair
+        apply ExtSet
+        intro z
+        constructor
+        · intro hz_in_s
+          -- z ∈ ⟨y, y⟩ \ {{y}} means z ∈ ⟨y, y⟩ and z ∉ {{y}}
+          have hz_in_pair : z ∈ ({ {y}, {y, y} } : U) := hz_in_s.left
+          have hz_not_in_singleton : z ∉ ({ {y} } : U) := hz_in_s.right
+          -- The only elements of ⟨y, y⟩ are {y} (since {y, y} = {y})
+          have h_pair : z = {y} ∨ z = {y, y} := (PairSet_is_specified y y z).mp hz_in_pair
+          -- But {y, y} = {y}, so both cases are z = {y}
+          cases h_pair with
+          | inl h_eq =>
+            -- z = {y}, but {y} ∈ {{y}}, contradiction
+            have h_mem : {y} ∈ ({ {y} } : U) := (Singleton_is_specified y ({y} : U)).mpr rfl
+            exact hz_not_in_singleton h_mem
+          | inr h_eq =>
+            -- z = {y, y} = {y}, so same as above
+            have h_yy_eq_y : ({y, y} : U) = ({y} : U) := by simp [PairSet_is_specified]
+            have h_mem : {y, y} ∈ ({ {y} } : U) := by
+              rw [h_yy_eq_y]
+              exact (Singleton_is_specified y {y}).mpr rfl
+            exact hz_not_in_singleton h_mem
+        · intro hz_in_empty
+          exfalso
+          exact EmptySet_is_empty z hz_in_empty
+      -- Now, by definition of snd, since s = ∅, we have snd ⟨y, y⟩ = ⋂ I = ⋂ {y} = y
+      -- Instead of rewriting, substitute directly:
+      simp only [h_I, h_s]
+      simp [Intersection_of_singleton]
+    -- Caso 2: x ≠ y
+    · have h_I : (⋂ ⟨x, y⟩) = {x} := by simp
+      set_option maxHeartbeats 1000000 in
+      have h_s_ne : (⟨x, y⟩ \ {h_I}) ≠ ∅ := by
+        simp [Difference_is_specified,
+              OrderedPair,
+              Singleton_is_specified,
+              PairSet_is_specified, h_eq]
+      -- La condición del 'if' es falsa
+      simp only [h_I, dif_neg h_s_ne]
+      -- Simplificamos los términos restantes
+      set_option maxHeartbeats 1000000 in
+      have h_s_elem : choose ((nonempty_iff_exists_mem (⟨x, y⟩ \ {{x}})).mp h_s_ne) = {x, y} := by
+        -- Aquí se demuestra que el único elemento de {{x,y}} es {x,y}
+        apply ExtSet
+        intro z
+        simp [Difference_is_specified, OrderedPair_is_specified, PairSet_is_specified, Singleton_is_specified, h_eq]
+      set_option maxHeartbeats 1000000 in
+      have h_r : (choose ((nonempty_iff_exists_mem (⟨x, y⟩ \ {{x}})).mp h_s_ne) \ {x}) = {y} := by
+        simp [h_s_elem, Difference_is_specified, PairSet_is_specified, Singleton_is_specified, h_eq]
+      simp [h_r]
 
     -- El teorema principal que une todo.
     @[simp]
