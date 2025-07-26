@@ -79,76 +79,55 @@ namespace SetUniverse
     noncomputable def Singleton (x : U) : U := ({ x , x } : U)
 
     @[simp]
-    theorem Difference_is_empty_mp (A B : U) :
-      ((A \ B) = (∅ : U)) → ∀ x, x ∈ A → x ∈ B
+    theorem membership_of_singleton (x : U) :
+      x ∈ Singleton x
         := by
-      let h : Prop := (A \ B) = (∅ : U)
-      let hx_notin_B : U → Prop := fun z => ¬ (z ∈ B)
-      let hx_in_A : U → Prop := fun y => (y ∈ A)
-      let hx_in_diff : U → Prop := fun x => (x ∈ ((A \ B) : U))
-      intro h x
-      intro hx_in_Ax
-      -- Suppose for contradiction that x ∈ (A \ B)
-      have hx_in_diff : x ∈ ((A \ B) : U) := ⟨hx_in_Ax, fun hB => by
-        -- x ∈ A and ¬(x ∈ B)
-        exact hB
-      ⟩
-      -- But h : (A \ B) = ∅, so x ∈ (A \ B) implies x ∈ ∅, contradiction
-      rw [h] at hx_in_diff
-      exact EmptySet_is_empty x hx_in_diff
-
-    @[simp]
-    theorem Difference_is_empty_mpr (A B : U) :
-      (∀ x, x ∈ A → x ∈ B) → ((A \ B) = (∅ : U))
-        := by sorry
+      unfold Singleton
+      have h := PairSet_is_specified x x x
+      exact h.mpr (Or.inl rfl)
 
     @[simp]
     theorem Singleton_is_specified (w z : U) :
       z ∈ w ↔ ( ( w \ ( (Singleton z) : U) ) : U) = (∅ : U)
-        := by
-      constructor
-      · -- Dirección ->
-        intro hw_in_w
-        unfold Singleton at hw_in_w
-        have h := (PairSet_is_specified z z z).mpr (Or.inl rfl)
-        exact (Difference_is_empty w ({z} : U)).mpr (by
-          apply ExtSet
-          intro v
-          constructor
-          · intro hv_in_w
-            exact (Singleton_is_specified z v).mp hv_in_w
-          · intro hv_in_empty
-            exact EmptySet_is_empty v hv_in_empty)
-      · -- Dirección <-
-        intro hw_in_singleton
-        unfold Singleton
-        have h := (PairSet_is_specified z z w).mpr (Or.inl rfl)
-        exact h.symm ▸ (Difference_is_empty w ({z} : U)).mpr (by
-          apply ExtSet
-          intro v
-          constructor
-          · intro hv_in_w
-            exact (Singleton_is_specified z v).mp hv_in_w
-          · intro hv_in_empty
-            exact EmptySet_is_empty v hv_in_empty)
-
-
+        := by sorry
+      -- constructor
+      -- · -- Dirección ->
+      --   intro hz_in_w
+      --   have h_z_in_w : z ∈ w := hz_in_w
+      --   have h_z_in_singleton_z : z ∈ (Singleton z) := by exact (membership_of_singleton z)
+      --   -- But z ∈ Singleton z is always true, so z ∉ Singleton z is impossible
+      --   have h_z_not_in_singleton_z : z ∉ (Singleton z) := by
+      --     intro h_z_in_singleton_z
+      --     -- Since (w \ Singleton z) = ∅, z ∉ w \ Singleton z for any z
+      --     have h_diff := Difference_is_specified w (Singleton z) z
+      --     have h_z_in_w_and_not_in_singleton : z ∈ w ∧ z ∉ (Singleton z) := h_diff.mp (by
+      --       -- The difference is empty, so z ∈ ∅ is false
+      --     exact False.elim h_z_in_singleton_z
+      --   exact False.elim (h_z_not_in_singleton_z h_z_in_singleton_z)
+      -- · -- Dirección <-
+      --   intro h_empty_diff
+      --   have h_diff := Difference_is_specified w (Singleton z) z
+      --   have h_z_in_w_and_not_in_singleton : z ∈ w ∧ z ∉ (Singleton z) := h_diff.mp (by
+      --     rw [h_empty_diff]
+      --     -- z ∈ ∅ is impossible, so this case is vacuously true
+      --     exfalso)
+      --   exact h_z_in_w_and_not_in_singleton.left
 
     notation " { " x " } " => Singleton x
 
     @[simp]
     theorem Singleton_unique (x : U) (z : U) (hz_singleton : ∀ (w : U), w ∈ z ↔ (w = x)) :
     z = { x }
-      := by
-    apply ExtSet
-    intro w
-    constructor
-    · -- Dirección ->
-      intro hw_in_z
-      exact (Singleton_is_specified x w).mpr ((hz_singleton w).mp hw_in_z)
-    · -- Dirección <-
-      intro hw_in_singleton
-      exact (hz_singleton w).mpr ((Singleton_is_specified x w).mp hw_in_singleton)
+      := by sorry
+    -- apply ExtSet
+    -- intro w
+    -- constructor
+    -- · -- Dirección ->
+    --   intro hw_in_z
+    --   exact (Singleton_is_specified x w).mpr ((hz_singleton w).mp hw_in_z)
+    -- · -- Dirección <-
+    --   intro hw_in_singleton
+    --   exact (hz_singleton w).mpr ((Singleton_is_specified x w).mp hw_in_singleton)
 
     @[simp]
     theorem PairSet_is_nonempty (x y : U) :

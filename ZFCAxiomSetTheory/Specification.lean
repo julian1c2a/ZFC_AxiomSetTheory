@@ -417,6 +417,52 @@ namespace SetUniverse
         have h_z_not_in_y : z ∉ y := h_disjoint z h_z_in_x
         exact (Difference_is_specified x y z).mpr ⟨h_z_in_x, h_z_not_in_y⟩
 
+    @[simp]
+    theorem Difference_empty (A B : U) :
+      ((A \ B) = (∅ : U)) → ∀ x, x ∈ A → x ∈ B
+        := by
+    intro h_empty x hx_in_A
+    rw [Difference_empty_iff_subseteq] at h_empty
+    -- Since A \ B = ∅, every x ∈ A must be in B, otherwise x ∈ A \ B ≠ ∅
+    have h_sub : ∀ x, x ∈ A → x ∈ B := h_empty
+    exact h_sub x hx_in_A
+
+    @[simp]
+    theorem Difference_empty_wc (A B : U) (h_empty : (A \ B) = ∅) :
+      ∀ x, x ∈ A → x ∈ B
+        := by
+      intro x hx_in_A
+      -- We can use the previous theorem to show this
+      exact Difference_empty A B h_empty x hx_in_A
+
+    @[simp]
+    theorem Difference_subseteq (A B : U) :
+      (∀ x, x ∈ A → x ∈ B) → ((A \ B) = (∅ : U))
+        := by
+      intro h
+      apply ExtSet
+      intro x
+      constructor
+      · intro hx
+        -- x ∈ A \ B means x ∈ A and x ∉ B
+        rw [Difference_is_specified] at hx
+        have hxA := hx.left
+        have hxB := hx.right
+        have hAB := h x hxA
+        -- But hAB: x ∈ B, contradiction
+        exfalso
+        exact hxB hAB
+      · intro hx_empty
+        -- x ∈ ∅ is impossible
+        exfalso
+        exact EmptySet_is_empty x hx_empty
+
+    @[simp]
+    theorem Difference_subseteq_wc (A B : U) (h_subseteq : ∀ x, x ∈ A → x ∈ B) :
+      (A \ B) = (∅ : U)
+        := by
+      exact Difference_subseteq A B h_subseteq
+
   end SpecificationAxiom
 end SetUniverse
 
@@ -432,4 +478,5 @@ export SetUniverse.SpecificationAxiom (
     Difference_subset Difference_with_empty
     Difference_self_empty Difference_disjoint
     Difference_empty_iff_subseteq
+    Difference_empty Difference_empty_wc Difference_subseteq Difference_subseteq_wc
 )
