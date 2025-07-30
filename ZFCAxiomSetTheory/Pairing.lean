@@ -246,8 +246,8 @@ namespace SetUniverse
       by_cases h_eq : x = y
       -- Caso 1: x = y
       · rw [h_eq]
-        have h_I : (⋂ ⟨y, y⟩) = {y} := intersection_of_ordered_pair y y
-        have h_s : ((⟨y, y⟩ : U) \ {y}) = (∅ : U) := by
+        have h_I : (⋂ (⟨y, y⟩ : U)) = ({y} : U) := intersection_of_ordered_pair y y
+        have h_s : ((⟨y, y⟩ : U) \ ({y} : U)) = (∅ : U) := by
           apply ExtSet
           intro z
           rw [Difference_is_specified, Singleton_is_specified]
@@ -261,55 +261,62 @@ namespace SetUniverse
               exfalso;
               exact h_z_neq_singleton hz_eq_singleton
             | inr hz_eq_pair =>
-                have h_pair_eq_singleton : ({y, y} : U) = ({y} : U) := by
-                  apply ExtSet; intro w; rw [PairSet_is_specified, Singleton_is_specified]; constructor
-                  · intro h_or; cases h_or with | inl h_y => exact h_y | inr h_y => exact h_y
-                  · intro h_y; exact Or.inl h_y
-                rw [h_pair_eq_singleton] at hz_eq_pair
-                exfalso; exact h_z_neq_singleton hz_eq_pair
+              have h_pair_eq_singleton : ({y, y} : U) = ({y} : U) := by
+                apply ExtSet;
+                intro w;
+                rw [PairSet_is_specified, Singleton_is_specified];
+                constructor
+                · intro h_or; cases h_or with | inl h_y => exact h_y | inr h_y => exact h_y
+                · intro h_y; exact Or.inl h_y
+              rw [h_pair_eq_singleton] at hz_eq_pair
+              exfalso; exact h_z_neq_singleton hz_eq_pair
           · intro h; exfalso; exact EmptySet_is_empty z h
-        have h_s_term_eq : ((⟨y, y⟩ : U) \ ({⋂ ⟨y, y⟩} : U)) = (∅ : U) := by rw [h_I, h_s]
-        rw [dif_pos h_s_term_eq]
+        rw [dif_pos h_s]
         rw [h_I, Intersection_of_singleton]
       -- Caso 2: x ≠ y
-      · have h_I : (⋂ ⟨x, y⟩) = {x} := intersection_of_ordered_pair x y
-        have h_s_ne : ((⟨x, y⟩ : U) \ {x}) ≠ ∅ := by
+      · have h_I : (⋂ (⟨x, y⟩ : U)) = ({x} : U) := intersection_of_ordered_pair x y
+        have h_s_ne : ((⟨x, y⟩ : U) \ ({x} : U)) ≠ ∅ := by
           intro h_s_eq_empty
           rw [Difference_empty_iff_subseteq] at h_s_eq_empty
           have h_subset := h_s_eq_empty
-          have h_xy_in_pair : {x, y} ∈ (⟨x, y⟩ : U) := (OrderedPair_is_specified x y {x, y}).mpr (Or.inr rfl)
-          have h_xy_in_singleton : ({x, y} : U) ∈ ({x} : U) := h_subset _ h_xy_in_pair
-          have h_xy_eq_x : ({x, y} : U) = ({x} : U) := (Singleton_is_specified ({x} : U) ({x, y} : U)).mp h_xy_in_singleton
+          have h_xy_in_pair : ({x, y} : U) ∈ (⟨x, y⟩ : U) := (OrderedPair_is_specified x y {x, y}).mpr (Or.inr rfl)
+          have h_xy_in_singleton : ({x, y} : U) ∈ (⟨x, y⟩ : U) := h_subset _ h_xy_in_pair
+          have h_xy_eq_I : ({x, y} : U) = h_I := (Singleton_is_specified h_I ({x,y} : U)).mp h_xy_in_singleton
+          rw [h_I] at h_xy_eq_I
           have h_y_in_xy : y ∈ ({x, y} : U) := (PairSet_is_specified x y y).mpr (Or.inr rfl)
-          rw [h_xy_eq_x] at h_y_in_xy
+          rw [h_xy_eq_I] at h_y_in_xy
           have h_y_eq_x := (Singleton_is_specified x y).mp h_y_in_xy
           exact h_eq h_y_eq_x.symm
-        have h_s_term_ne : ((⟨x, y⟩ : U) \ ({⋂ ⟨x, y⟩} : U)) ≠ ∅ := by
-          rw [h_I];
-          exact h_s_ne
-        rw [dif_neg h_s_term_ne]
-        have h_s_eq : ((⟨x, y⟩ : U) \ ({⋂ ⟨x, y⟩} : U)) = ({{x, y}} : U) := by
-          rw [h_I]
+        rw [dif_neg h_s_ne]
+        have h_s_eq : ((⟨x, y⟩ : U) \ ({h_I} : U)) = ({{x, y}} : U) := by
           apply ExtSet; intro z
           rw [Difference_is_specified, OrderedPair_is_specified, Singleton_is_specified]
           constructor
-          · intro h; cases h.1 with | inl h1 => exfalso; exact h.2 h1 | inr h2 => exact (Singleton_is_specified {x,y} z).mpr h2
+          · intro h;
+            cases h.1 with
+            | inl h1 => exfalso; exact h.2 h1
+            | inr h2 => exact (Singleton_is_specified {x,y} z).mpr h2
           · intro h;
             have h_z_eq_xy := (Singleton_is_specified {x,y} z).mp h;
             constructor
             · exact (OrderedPair_is_specified x y z).mpr (Or.inr h_z_eq_xy)
             · intro h_contra;
               rw [h_z_eq_xy] at h_contra;
-              have h_inj : ({x,y} : U) = ({x} : U) := h_contra
-              have h_y_in_x : y ∈ ({x} : U) := by rw [←h_inj]; exact (PairSet_is_specified x y y).mpr (Or.inr rfl)
+              have h_inj : ({x,y} : U) = h_I := h_contra
+              rw [h_I] at h_inj
+              have h_y_in_x : y ∈ ({x} : U) := by
+                rw [←h_inj];
+                exact (PairSet_is_specified x y y).mpr (Or.inr rfl)
               have h_y_eq_x := (Singleton_is_specified x y).mp h_y_in_x
               exact h_eq h_y_eq_x.symm
-        have h_s_elem : choose ((nonempty_iff_exists_mem _).mp h_s_term_ne) = {x, y} := by
+        have h_s_elem : choose ((nonempty_iff_exists_mem _).mp h_s_ne) = ({x, y} : U) := by
           have h_s_is_singleton : ∀ a, a ∈ ({{x, y}} : U) → a = ({x, y} : U) := by
-            intro a ha; exact (Singleton_is_specified {x, y} a).mp ha
+            intro a ha;
+            exact (Singleton_is_specified {x, y} a).mp ha
           apply h_s_is_singleton
-          rw [h_s_eq]; exact choose_spec ((nonempty_iff_exists_mem _).mp h_s_term_ne)
-        have h_r : (choose ((nonempty_iff_exists_mem _).mp h_s_term_ne) \ (⋂ ⟨x, y⟩)) = {y} := by
+          rw [h_s_eq];
+          exact choose_spec ((nonempty_iff_exists_mem _).mp h_s_ne)
+        have h_r : (choose ((nonempty_iff_exists_mem _).mp h_s_ne) \ h_I) = ({y} : U) := by
           rw [h_s_elem, h_I]
           apply ExtSet; intro z
           rw [Difference_is_specified, PairSet_is_specified, Singleton_is_specified]
@@ -318,12 +325,17 @@ namespace SetUniverse
             have h_z_cases := h.1;
             have h_z_neq_x := h.2;
             cases h_z_cases with
-            | inl hz_eq_x => exfalso; exact h_z_neq_x hz_eq_x
-            | inr hz_eq_y => exact (Singleton_is_specified y z).mpr hz_eq_y
+            | inl hz_eq_x =>
+              exfalso;
+              exact h_z_neq_x hz_eq_x
+            | inr hz_eq_y =>
+              exact (Singleton_is_specified y z).mpr hz_eq_y
           · intro hz_in_y; have hz_eq_y := (Singleton_is_specified y z).mp hz_in_y; constructor
             · exact (PairSet_is_specified x y z).mpr (Or.inr hz_eq_y)
-            · intro h_z_eq_x; rw [hz_eq_y] at h_z_eq_x; exact h_eq h_z_eq_x.symm
-        have h_final : (⋂ ( (choose ((nonempty_iff_exists_mem ((⟨x, y⟩ : U) \ {⋂ ⟨x, y⟩})).mp h_s_term_ne)) \ (⋂ ⟨x, y⟩) )) = y := by
+            · intro h_z_eq_x;
+              rw [hz_eq_y] at h_z_eq_x;
+              exact h_eq h_z_eq_x.symm
+        have h_final : (⋂ ( (choose ((nonempty_iff_exists_mem ((⟨x, y⟩ : U) \ {h_I})).mp h_s_ne)) \ h_I )) = y := by
           rw [h_r, Intersection_of_singleton]
         exact h_final
 
