@@ -247,7 +247,7 @@ namespace SetUniverse
       -- Caso 1: x = y
       · rw [h_eq]
         have h_I : (⋂ ⟨y, y⟩) = {y} := intersection_of_ordered_pair y y
-        have h_s : (((⟨y, y⟩ : U) \ ({y} : U)) : U) = (∅ : U) := by
+        have h_s : ((⟨y, y⟩ : U) \ ({y} : U)) = (∅ : U) := by
           rw [h_I]
           apply ExtSet
           intro z
@@ -270,12 +270,12 @@ namespace SetUniverse
         rw [h_s, dif_pos rfl, h_I, Intersection_of_singleton]
       -- Caso 2: x ≠ y
       · have h_I : (⋂ ⟨x, y⟩) = {x} := intersection_of_ordered_pair x y
-        have h_s_ne : ((⟨x, y⟩ : U) \ ({y} : U)) ≠ ∅ := by
+        have h_s_ne : ((⟨x, y⟩ : U) \ ({x} : U)) ≠ (∅ : U) := by
           intro h_s_eq_empty
           rw [Difference_empty_iff_subseteq] at h_s_eq_empty
           have h_subset := h_s_eq_empty
           have h_xy_in_pair : {x, y} ∈ (⟨x, y⟩ : U) := (OrderedPair_is_specified x y {x, y}).mpr (Or.inr rfl)
-          have h_xy_in_singleton : ({x, y} : U) ∈ ({y} : U) := h_subset _ h_xy_in_pair
+          have h_xy_in_singleton : ({x, y} : U) ∈ ({x} : U) := h_subset _ h_xy_in_pair
           rw [h_I] at h_xy_in_singleton
           have h_xy_eq_x : {x, y} = {x} := (Singleton_is_specified {x} {x, y}).mp h_xy_in_singleton
           have h_y_in_xy : y ∈ {x, y} := (PairSet_is_specified x y y).mpr (Or.inr rfl)
@@ -304,7 +304,12 @@ namespace SetUniverse
           apply ExtSet; intro z
           rw [Difference_is_specified, PairSet_is_specified, Singleton_is_specified]
           constructor
-          · intro h; have h_z_cases := h.1; have h_z_neq_x := h.2; cases h_z_cases with | inl hz_eq_x => exfalso; exact h_z_neq_x hz_eq_x | inr hz_eq_y => exact hz_eq_y
+          · intro h;
+            have h_z_cases := h.1;
+            have h_z_neq_x := h.2;
+            cases h_z_cases with
+            | inl hz_eq_x => exfalso; exact h_z_neq_x hz_eq_x
+            | inr hz_eq_y => exact hz_eq_y
           · intro hz_eq_y; constructor
             · exact (PairSet_is_specified x y z).mpr (Or.inr hz_eq_y)
             · intro h_z_eq_x; rw [hz_eq_y] at h_z_eq_x; exact h_eq h_z_eq_x.symm
@@ -391,18 +396,44 @@ namespace SetUniverse
 end SetUniverse
 
 export SetUniverse.PairingAxiom (
-    Pairing, PairingUniqueSet,
-    PairSet, PairSet_is_specified,
-    Singleton, Singleton_is_specified,
-    member_intersection, Intersection,
-    OrderedPair, OrderedPair_is_specified, isOrderedPair,
-    fst, snd, fst_of_ordered_pair, snd_of_ordered_pair, OrderedPairSet_is_WellConstructed,
-    isRelation, isRelation_in_Sets, domain, range,
-    isReflexive, isReflexive_in_Set, isIReflexive,
-    isSymmetric, isAsymmetric, isAntiSymmetric, isTransitive,
-    isEquivalenceRelation, isEquivalenceRelation_in_Set,
-    isPartialOrder, isStrictOrder, isWellDefined, isTotalOrder, isWellFounded,
-    isFunction, isInyective, isSurjectiveFunction, isBijectiveFunction
+    Pairing
+    PairingUniqueSet
+    PairSet
+    PairSet_is_specified
+    Singleton
+    Singleton_is_specified
+    member_intersection
+    Intersection
+    OrderedPair
+    OrderedPair_is_specified
+    isOrderedPair
+    fst
+    snd
+    fst_of_ordered_pair
+    snd_of_ordered_pair
+    OrderedPairSet_is_WellConstructed
+    isRelation
+    isRelation_in_Sets
+    domain
+    range
+    isReflexive
+    isReflexive_in_Set
+    isIReflexive
+    isSymmetric
+    isAsymmetric
+    isAntiSymmetric
+    isTransitive
+    isEquivalenceRelation
+    isEquivalenceRelation_in_Set
+    isPartialOrder
+    isStrictOrder
+    isWellDefined
+    isTotalOrder
+    isWellFounded
+    isFunction
+    isInyective
+    isSurjectiveFunction
+    isBijectiveFunction
 )
 
 /-!
