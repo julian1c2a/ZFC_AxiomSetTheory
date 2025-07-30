@@ -247,7 +247,7 @@ namespace SetUniverse
       -- Caso 1: x = y
       · rw [h_eq]
         have h_I : (⋂ ⟨y, y⟩) = {y} := intersection_of_ordered_pair y y
-        have h_s : ((⟨y, y⟩ : U) \ ({y} : U)) = (∅ : U) := by
+        have h_s : ((⟨y, y⟩ : U) \ {⋂ ⟨y, y⟩}) = (∅ : U) := by
           rw [h_I]
           apply ExtSet
           intro z
@@ -270,36 +270,41 @@ namespace SetUniverse
         rw [h_s, dif_pos rfl, h_I, Intersection_of_singleton]
       -- Caso 2: x ≠ y
       · have h_I : (⋂ ⟨x, y⟩) = {x} := intersection_of_ordered_pair x y
-        have h_s_ne : ((⟨x, y⟩ : U) \ ({x} : U)) ≠ (∅ : U) := by
+        have h_s_ne : ((⟨x, y⟩ : U) \ {⋂ ⟨x, y⟩}) ≠ (∅ : U) := by
           intro h_s_eq_empty
           rw [Difference_empty_iff_subseteq] at h_s_eq_empty
           have h_subset := h_s_eq_empty
           have h_xy_in_pair : {x, y} ∈ (⟨x, y⟩ : U) := (OrderedPair_is_specified x y {x, y}).mpr (Or.inr rfl)
-          have h_xy_in_singleton : ({x, y} : U) ∈ ({x} : U) := h_subset _ h_xy_in_pair
+          have h_xy_in_singleton : ({x, y} : U) ∈ ({⋂ ⟨x, y⟩} : U) := h_subset _ h_xy_in_pair
           rw [h_I] at h_xy_in_singleton
-          have h_xy_eq_x : {x, y} = {x} := (Singleton_is_specified {x} {x, y}).mp h_xy_in_singleton
-          have h_y_in_xy : y ∈ {x, y} := (PairSet_is_specified x y y).mpr (Or.inr rfl)
+          have h_xy_eq_x : ({x, y} : U) = ({x} : U) := (Singleton_is_specified ({x} : U) ({x, y} : U)).mp h_xy_in_singleton
+          have h_y_in_xy : y ∈ ({x, y} : U) := (PairSet_is_specified x y y).mpr (Or.inr rfl)
           rw [h_xy_eq_x] at h_y_in_xy
           have h_y_eq_x := (Singleton_is_specified x y).mp h_y_in_xy
           exact h_eq h_y_eq_x.symm
         rw [dif_neg h_s_ne]
-        have h_s_eq : (⟨x, y⟩ \ {h_I}) = {{x, y}} := by
+        have h_s_eq : ((⟨x, y⟩ : U) \ {⋂ ⟨x, y⟩}) = ({{x, y}} : U) := by
+          rw [h_I]
           apply ExtSet; intro z
           rw [Difference_is_specified, OrderedPair_is_specified, Singleton_is_specified]
           constructor
-          · intro h; cases h.1 with | inl h1 => exfalso; exact h.2 h1 | inr h2 => exact h2
-          · intro h; constructor
+          · intro h;
+            cases h.1 with
+            | inl h1 => exfalso; exact h.2 h1
+            | inr h2 => exact h2
+          · intro h;
+            constructor
             · exact (OrderedPair_is_specified x y z).mpr (Or.inr h)
-            · intro h_contra; rw [h] at h_contra; have h_inj : {x,y} = {x} := h_contra
-              have h_y_in_x : y ∈ {x} := by rw [←h_inj]; exact (PairSet_is_specified x y y).mpr (Or.inr rfl)
+            · intro h_contra; rw [h] at h_contra; have h_inj : ({x,y} : U) = ({x} : U) := h_contra
+              have h_y_in_x : y ∈ ({x} : U) := by rw [←h_inj]; exact (PairSet_is_specified x y y).mpr (Or.inr rfl)
               have h_y_eq_x := (Singleton_is_specified x y).mp h_y_in_x
               exact h_eq h_y_eq_x.symm
         have h_s_elem : choose ((nonempty_iff_exists_mem _).mp h_s_ne) = {x, y} := by
-          have h_s_is_singleton : ∀ a, a ∈ {{x, y}} → a = {x, y} := by
+          have h_s_is_singleton : ∀ a, a ∈ ({{x, y}} : U) → a = ({x, y} : U) := by
             intro a ha; exact (Singleton_is_specified {x, y} a).mp ha
           apply h_s_is_singleton
           rw [h_s_eq]; exact choose_spec ((nonempty_iff_exists_mem _).mp h_s_ne)
-        have h_r : (choose ((nonempty_iff_exists_mem _).mp h_s_ne) \ h_I) = {y} := by
+        have h_r : (choose ((nonempty_iff_exists_mem _).mp h_s_ne) \ (⋂ ⟨x, y⟩)) = {y} := by
           rw [h_s_elem, h_I]
           apply ExtSet; intro z
           rw [Difference_is_specified, PairSet_is_specified, Singleton_is_specified]
@@ -312,8 +317,11 @@ namespace SetUniverse
             | inr hz_eq_y => exact hz_eq_y
           · intro hz_eq_y; constructor
             · exact (PairSet_is_specified x y z).mpr (Or.inr hz_eq_y)
-            · intro h_z_eq_x; rw [hz_eq_y] at h_z_eq_x; exact h_eq h_z_eq_x.symm
+            · intro h_z_eq_x;
+              rw [hz_eq_y] at h_z_eq_x;
+              exact h_eq h_z_eq_x.symm
         rw [h_r, Intersection_of_singleton]
+
 
     -- El teorema principal que une todo.
     @[simp]
