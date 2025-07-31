@@ -397,19 +397,15 @@ namespace SetUniverse
         exact snd_of_ordered_pair_eq y y rfl
       -- Caso 2: x ≠ y
       · have h_I : (⋂ (⟨x, y⟩ : U)) = ({x} : U) := intersection_of_ordered_pair x y
-        have h_s_ne : ((⟨x, y⟩ \ {h_I}) ≠ ∅) := by
-          rw [h_I] -- Ahora el objetivo es (⟨x, y⟩ \ {{x}}) ≠ ∅
+        have h_s_ne : ((⟨x, y⟩ \ ({{x}} : U)) ≠ ∅) := by
+          -- Use the explicit result from intersection_of_ordered_pair_neq_mem
+          have h_diff_eq : ((⟨x, y⟩ : U) \ ({({x} : U)} : U)) = ({{x, y}} : U) :=
+            by rw [←h_I]; exact intersection_of_ordered_pair_neq_mem x y h_eq
+          rw [h_diff_eq]
           intro h_s_eq_empty
-          rw [Difference_empty_iff_subseteq] at h_s_eq_empty
-          have h_subset := h_s_eq_empty
-          have h_xy_in_pair : ({x, y} : U) ∈ (⟨x, y⟩ : U) := (OrderedPair_is_specified x y {x, y}).mpr (Or.inr rfl)
-          have h_xy_in_singleton : ({x, y} : U) ∈ (⟨x, y⟩ : U) := h_subset _ h_xy_in_pair
-          have h_xy_eq_I : ({x, y} : U) = h_I := (Singleton_is_specified h_I ({x,y} : U)).mp h_xy_in_singleton
-          rw [h_I] at h_xy_eq_I
-          have h_y_in_xy : y ∈ ({x, y} : U) := (PairSet_is_specified x y y).mpr (Or.inr rfl)
-          rw [h_xy_eq_I] at h_y_in_xy
-          have h_y_eq_x := (Singleton_is_specified x y).mp h_y_in_xy
-          exact h_eq h_y_eq_x.symm
+          -- Now the goal is ({{x, y}} : U) = ∅, which is false since {x, y} ∈ {{x, y}}
+          have h_elem : ({x, y} : U) ∈ ({{x, y}} : U) := (Singleton_is_specified {x, y} {x, y}).mpr rfl
+          exact EmptySet_is_empty ({x, y} : U) h_elem
         rw [dif_neg h_s_ne]
         have h_s_eq : ((⟨x, y⟩ : U) \ ({h_I} : U)) = ({{x, y}} : U) := by
           apply ExtSet; intro z
