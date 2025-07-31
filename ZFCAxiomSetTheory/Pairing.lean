@@ -194,7 +194,6 @@ namespace SetUniverse
         let r := s_elem \ I
         ⋂ r
 
-
     lemma intersection_of_ordered_pair (x y : U) : (⋂ ⟨x, y⟩) = {x} := by
       apply ExtSet
       intro z
@@ -227,17 +226,32 @@ namespace SetUniverse
           | inr h_choose_eq_pair => rw [h_choose_eq_pair]; exact (PairSet_is_specified x y z).mpr (Or.inl hz_eq_x)
         · intro w hw_in_pair
           have hw_cases := (OrderedPair_is_specified x y w).mp hw_in_pair
-          have hz_eq_x : z = x := (Singleton_is_specified x z).mp hz_in_singleton
-          cases hw_cases with
-          | inl hw_eq_singleton => rw [hw_eq_singleton]; exact hz_in_singleton
-          | inr hw_eq_pair => rw [hw_eq_pair]; exact (PairSet_is_specified x y z).mpr (Or.inl hz_eq_x)
+          have hz_eq_x : z = x := (Singleton_is_specified x z).mp hz_in_singleton;
+            cases hw_cases with
+            | inl hw_eq_singleton => rw [hw_eq_singleton]; exact hz_in_singleton
+            | inr hw_eq_pair => rw [hw_eq_pair]; exact (PairSet_is_specified x y z).mpr (Or.inl hz_eq_x)
 
-    -- Demostración de que fst recupera el primer elemento.
-    theorem fst_of_ordered_pair (x y : U) :
-      fst (⟨x, y⟩ : U) = x
+      lemma auxiliary_idempotence_of_or_in (x y : U) :
+        x ∈ y ↔ x ∈ y ∨ x ∈ y
         := by
-      unfold fst
-      rw [intersection_of_ordered_pair, Intersection_of_singleton]
+        constructor
+        · intro hx_in_y
+          exact Or.inl hx_in_y
+        · intro h_or
+          cases h_or with
+          | inl hx_in_y => exact hx_in_y
+          | inr hx_in_y => exact hx_in_y
+
+    lemma auxiliary_idempotence_of_or_eq (x y : U) :
+      x = y ↔ x = y ∨ x = y
+        := by
+      constructor
+      · intro hx_eq_y
+        exact Or.inl hx_eq_y
+      · intro h_or
+        cases h_or with
+        | inl hx_eq_y => exact hx_eq_y
+        | inr hx_eq_y => exact hx_eq_y
 
     lemma ordered_pair_eq_mem (x y : U) (h_eq : x = y) :
       ∀ (z : U), z ∈ (⟨x, y⟩ : U) → z = ({y} : U)
@@ -255,76 +269,65 @@ namespace SetUniverse
           _ = ((({({y} : U), ({y} : U)} : U)  \ ({({y} : U)} : U)) : U) := by rfl
           _ = ((({({y} : U)} : U)  \ ({({y} : U)} : U)) : U) := by rfl
           _ = (∅ : U) := Difference_self_empty ({({y} : U)} : U)
-
       intro z hz_in_pair
       rw [h_eq] at hz_in_pair
       have h_1_eq_2 : ({y} : U) = ({y, y} : U) := by
         apply ExtSet;
         intro w;
         rw [PairSet_is_specified, Singleton_is_specified];
-        subst h_eq;
-        have h_pair_eq_singleton : (({y, y}) : U) = (({y}) : U) := by
-          apply ExtSet;
-          intro w;
-          rw [PairSet_is_specified, Singleton_is_specified];
-          constructor
-          · intro h_or;
-            cases h_or with
-            | inl h_y => exact h_y
-            | inr h_y => exact h_y
-          · intro h_y;
-            exact Or.inl h_y
-        exact (by
-          calc
-            ({y} : U) = ({y, y} : U) := choose_spec (PairingUniqueSet y y)
-            _ = ({y} : U) := by rfl
-            _ = ({y} : U) := by rfl
-            _ = (∅ : U) := by rfl
-        );
-        constructor
-        · intro h_or;
-          cases h_or with
-          | inl h_eq => exact h_eq
-          | inr h_eq => exact h_eq
-        · intro h_y;
-          exact Or.inl h_y
-      have hz_in_pair_cases := (OrderedPair_is_specified y y z).mp hz_in_pair
-      cases hz_in_pair_cases with
-      | inl hz_eq_singleton =>
-        exfalso;
-        -- hz_eq_singleton : z = {y}
-        -- h_z_neq_singleton expects z = y
-        -- But in this context, {y} = y, so z = y
-        have hz_eq_y : z = y := by
-          -- z = {y} by hz_eq_singleton, and {y} = y by Singleton_is_specified
-          rw [hz_eq_singleton]
-          exact (Singleton_is_specified y y).mp rfl
-        exact h_z_neq_singleton hz_eq_y
-      | inr hz_eq_pair =>
-        have h_pair_eq_singleton : ({y, y} : U) = ({y} : U) := by
-          apply ExtSet;
-          intro w;
+        exact (auxiliary_idempotence_of_or_eq w y);
+      have hz_in_pair_cases : z = { y } ∨ z = { y, y } := (OrderedPair_is_specified y y z).mp hz_in_pair
+      have hz_eq_singleton : z = {y} :=
+        match hz_in_pair_cases with
+        | Or.inl h => h
+        | Or.inr h =>
+          -- Use h_1_eq_2 : {y} = {y, y}
+          h_1_eq_2.symm ▸ h
+      have h_z_eq_sing_y : z = ({y} : U) := by
+        apply ExtSet;
+        intro w;
+        rw [hz_eq_singleton];
+      have h_y_in_z : y ∈ z := by
+        rw [hz_eq_singleton];
+        exact (Singleton_is_specified y y).mpr rfl
+      exact h_z_eq_sing_y
 
-        theorem singleton_eq_pair_eqs (x y : U) :
-      (x = y) → ({x} : U) = ({x, y} : U) := by
+    lemma singleton_eq_pair_eqs (x y : U) :
+      (x = y) → ({x} : U) = ({x, y} : U)
+        := by
       intro h_eq
       apply ExtSet
       intro z
-      constructor
-      · intro hz_in_singleton
-        have hz_in_x : z = x := by
-          calc
-            z ∈ ({x} : U) ↔ z ∈ ({y} : U) := by
-              rw [Singleton_is_specified, h_eq]
-            _ ↔ z = y := by
-              rw [Singleton_is_specified, h_eq]
-        rw [h_eq] at hz_eq_x
-        exact hz_eq_x
-      · intro hz_eq_y
-        rw [h_eq]
-        exact (Singleton_is_specified x z).mpr hz_eq_y
+      rw [PairSet_is_specified, Singleton_is_specified]
+      rw [h_eq]
+      exact auxiliary_idempotence_of_or_eq z y
 
-    theorem snd_of_ordered_pair_eq (x y : U) (h_eq : x = y) : snd ⟨x, y⟩ = y := by
+    lemma diff_pair_sing_intersection (x y : U) :
+      (x = y) → (((⟨x, y⟩ : U) \ ({(⋂ (⟨y, y⟩ : U))})) = (∅ : U))
+        := by
+          intro h_eq
+          have h_I : (⋂ (⟨y, y⟩ : U)) = ({y} : U) := intersection_of_ordered_pair y y
+          have h_ss : {(⋂ (⟨y, y⟩ : U))} = {({y} : U)} := by
+            calc
+              {(⋂ (⟨y, y⟩ : U))} = Singleton (⋂ (⟨y, y⟩ : U)) := rfl
+              _ = {({y} : U)} := by rw [h_I]
+          have h_s : ((⟨y, y⟩ : U) \ ({({y} : U)})) = (∅ : U) := by
+            exact Difference_self_empty ({({y} : U)})
+          rw [h_eq]
+          have h_s_inv : ((({({y} : U)}) \ (⟨y, y⟩ : U))) : U = (∅ : U) := by
+            exact Difference_self_empty ({({y} : U)})
+          rw [h_s]
+          
+    -- Demostración de que fst recupera el primer elemento.
+    theorem fst_of_ordered_pair (x y : U) :
+      fst (⟨x, y⟩ : U) = x
+        := by
+      unfold fst
+      rw [intersection_of_ordered_pair, Intersection_of_singleton]
+
+    theorem snd_of_ordered_pair_eq (x y : U) (h_eq : x = y) :
+      snd ⟨x, y⟩ = y
+        := by
       rw [h_eq]
       unfold snd
       have h_I : (⋂ (⟨y, y⟩ : U)) = ({y} : U) := intersection_of_ordered_pair y y
