@@ -582,6 +582,27 @@ namespace SetUniverse
             -- Esto es exactamente el teorema que ya has probado
             apply Eq_of_OrderedPairs_given_projections
 
+    theorem isOrderedPair_equiv_isOrderedPair_concept (w : U) :
+      isOrderedPair w ↔ ∃ (x y : U), w = ⟨ x , y ⟩
+        := by
+          constructor
+          · intro h_is_op
+            obtain ⟨x, y, h_w_eq⟩ := h_is_op
+            exact Exists.intro x (Exists.intro y h_w_eq)
+          · intro h_exists
+            obtain ⟨x, y, h_w_eq⟩ := h_exists
+            exact ⟨x, y, h_w_eq⟩
+
+    theorem isOrderedPair_by_construction (w : U) :
+      isOrderedPair w ↔ (w = (⟨ fst w , snd w ⟩ : U))
+        := by
+          constructor
+          · intro h_is_op
+            exact OrderedPairSet_is_WellConstructed w h_is_op
+          · intro h_w_eq
+            -- If w = ⟨fst w, snd w⟩, then w is an ordered pair by definition
+            exact ⟨fst w, snd w, h_w_eq⟩
+
     /-! ### Relaciones y Funciones: Inyectividad, Sobreyectividad, Equivalencia y Orden ### -/
 
     noncomputable def isRelation (R : U) : Prop :=
@@ -593,9 +614,17 @@ namespace SetUniverse
     noncomputable def isRelation_in_Sets (A B R : U) : Prop :=
       ∀ (z : U), z ∈ R → ∃ (x y : U), z = ⟨ x , y ⟩ → x ∈ A ∧ y ∈ B
 
+    noncomputable def ReverseOrderedPair (w : U) : U := { snd w , fst w }
+
     noncomputable def isReverseRelation (R S : U) : Prop :=
-      (∀ (z : U), (z ∈ R) ↔ ∃ (w : U), w ∈ S → w = ⟨ fst z , snd z ⟩)
-      ∧ (∀ (w : U), (w ∈ S) ↔ ∃ (z : U), z ∈ R → z = ⟨ snd w , fst w ⟩)
+      ∀ (w : U), w ∈ R ↔ (ReverseOrderedPair w) ∈ S
+
+    noncomputable def isIdRelation (I : U) : Prop :=
+      ∀ (x : U), x ∈ I → fst x = snd x
+
+    noncomputable def isInComposition (R S w : U) : Prop :=
+      ∃ (W : U), w ∈ W ↔ ∃ (r : U), r ∈ R → ∃ (s : U), s ∈ S → snd r = fst s ∧ w = ⟨ fst r , snd s ⟩
+
 
     noncomputable def domain (R : U) : U :=
       SpecSet (fst R) (fun x => ∃ y, ⟨ x , y ⟩ ∈ R)
