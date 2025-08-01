@@ -539,6 +539,60 @@ namespace SetUniverse
       obtain ⟨x, y, h_w_eq⟩ := h_is_op
       rw [h_w_eq, fst_of_ordered_pair, snd_of_ordered_pair]
 
+    theorem Eq_of_OrderedPairs_given_projections (a b c d : U) :
+      (⟨a, b⟩ : U) = (⟨c, d⟩ : U) → a = c ∧ b = d
+        := by
+      intro h_eq
+      -- Descomponemos el par ordenado y usamos la definición de igualdad de conjuntos.
+      have h_a_eq_c : fst (⟨a, b⟩ : U) = fst (⟨c, d⟩ : U) := by
+        rw [h_eq]
+        -- goal is solved by rw
+      have h_b_eq_d : snd (⟨a, b⟩ : U) = snd (⟨c, d⟩ : U) := by
+        rw [h_eq]
+      -- Ahora, probamos que fst y snd son iguales a los elementos correspondientes.
+      constructor
+      · rw [fst_of_ordered_pair, fst_of_ordered_pair] at h_a_eq_c
+        exact h_a_eq_c
+      · rw [snd_of_ordered_pair, snd_of_ordered_pair] at h_b_eq_d
+        exact h_b_eq_d
+
+    theorem Eq_OrderedPairs (w v : U) :
+      isOrderedPair w → isOrderedPair v → ((fst w = fst v ∧ snd w = snd v) ↔ (w = v))
+        := by
+          intro h_w_is_op
+          obtain ⟨x₁, y₁, h_w_eq⟩ := h_w_is_op
+          intro h_v_is_op
+          obtain ⟨x₂, y₂, h_v_eq⟩ := h_v_is_op
+          let xₒₙₑ : U := fst w
+          have h_fst_w_eq_w_1 : xₒₙₑ = x₁ := by
+            subst h_w_eq
+            exact fst_of_ordered_pair x₁ y₁
+          let yₒₙₑ : U := snd w
+          have h_snd_w_eq_w_2 : yₒₙₑ = y₁ := by
+            subst h_w_eq
+            exact snd_of_ordered_pair x₁ y₁
+          have h_w_eq' : w = ⟨xₒₙₑ, yₒₙₑ⟩ := OrderedPairSet_is_WellConstructed w ⟨x₁, y₁, h_w_eq⟩
+          let xₜᵥₒ : U := fst v
+          have h_fst_v_eq_v_1 : xₜᵥₒ = x₂ := by
+            subst h_v_eq
+            exact fst_of_ordered_pair x₂ y₂
+          let yₜᵥₒ : U := snd v
+          have h_snd_v_eq_v_2 : yₜᵥₒ = y₂ := by
+            subst h_v_eq
+            exact snd_of_ordered_pair x₂ y₂
+          have h_v_eq' : v = ⟨xₜᵥₒ, yₜᵥₒ⟩ := OrderedPairSet_is_WellConstructed v ⟨x₂, y₂, h_v_eq⟩
+          -- Ahora podemos usar las proyecciones para probar la equivalencia.
+          constructor
+          · intro h_proj_eq
+            -- Si las proyecciones son iguales, los pares ordenados son iguales.
+            have h₁ : xₒₙₑ = xₜᵥₒ := h_proj_eq.left
+            have h₂ : yₒₙₑ = yₜᵥₒ := h_proj_eq.right
+            rw [h_w_eq', h_v_eq', h₁, h₂]
+          · intro h_eq
+            -- Si w = v, entonces las proyecciones son iguales.
+            rw [h_eq]
+            exact ⟨rfl, rfl⟩
+
     /-! ### Relaciones y Funciones: Inyectividad, Sobreyectividad, Equivalencia y Orden ### -/
 
     noncomputable def isRelation (w : U) : Prop :=
