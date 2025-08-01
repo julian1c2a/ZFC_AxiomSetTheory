@@ -471,7 +471,6 @@ namespace SetUniverse
       rw [intersection_of_ordered_pair, Intersection_of_singleton]
 
     -- Demostración de que snd recupera el segundo elemento.
-    -- Demostración de que snd recupera el segundo elemento.
     theorem snd_of_ordered_pair (x y : U) : snd ⟨x, y⟩ = y := by
       unfold snd
       by_cases h_eq : x = y
@@ -483,30 +482,39 @@ namespace SetUniverse
         have h_s_ne : ((⟨x, y⟩ : U) \ {(⋂ (⟨x, y⟩ : U))}) ≠ ∅ := by
           have h_I : (⋂ (⟨x, y⟩ : U)) = {x} := intersection_of_ordered_pair x y
           rw [h_I] -- El conjunto es ⟨x, y⟩ \ {{x}}
-          have h_s_eq : (⟨x, y⟩ \ ({{x}}: U)) = {{x, y}} := diff_ordered_pair_neq x y h_eq
+          have h_s_eq : ((⟨x, y⟩ : U) \ ({{x}} : U)) = ({{x, y}} : U) := diff_ordered_pair_neq x y h_eq
           rw [h_s_eq]
           intro h_contra -- Suponemos {{x, y}} = ∅ para llegar a una contradicción
           have h_mem : ({x, y} : U) ∈ ({{x, y}} : U) := (Singleton_is_specified _ _).mpr rfl
           rw [h_contra] at h_mem
           exact EmptySet_is_empty _ h_mem
-
         -- Como la condición es falsa, el 'if' se resuelve a la rama 'else'.
         simp only [dif_neg h_s_ne]
-
         -- El objetivo ahora es: ⋂ (choose (...) \ ⋂ ⟨x, y⟩) = y
         -- Probamos que el 'choose' selecciona el único elemento de s, que es {x, y}.
-        have h_s_elem_eq : choose ((nonempty_iff_exists_mem ((⟨x, y⟩ : U) \ {(⋂ (⟨x, y⟩ : U))})).mp h_s_ne) = {x, y} := by
-          have h_I : (⋂ (⟨x, y⟩ : U)) = {x} := intersection_of_ordered_pair x y
-          have h_s_eq : ((⟨x, y⟩ : U) \ {(⋂ (⟨x, y⟩ : U))}) = ({({x, y} : U)} : U) := by
-            rw[h_I];
+        have h_s_elem_eq :
+          choose ((nonempty_iff_exists_mem ((⟨x, y⟩ : U) \ {(⋂ (⟨x, y⟩ : U))})).mp h_s_ne) = ({x, y} : U)
+          := by
+          -- Sea 's' el conjunto del que estamos escogiendo.
+          let s := (⟨x, y⟩ : U) \ {(⋂ (⟨x, y⟩ : U))}
+          -- La propiedad de 'choose' nos dice que el elemento escogido está en 's'.
+          have h_mem_of_choose : choose ((nonempty_iff_exists_mem s).mp h_s_ne) ∈ s :=
+            choose_spec ((nonempty_iff_exists_mem s).mp h_s_ne)
+          -- Ahora, probamos que 's' es en realidad el singleton {{x, y}}.
+          have h_s_is_singleton : s = ({{x, y}} : U) := by
+            -- Para evitar problemas con la reescritura de 's',
+            -- hacemos explícito el objetivo con 'change'.
+            change ((⟨x, y⟩ : U) \ {(⋂ (⟨x, y⟩ : U))}) = ({{x, y}} : U)
+            -- Reemplazamos la intersección directamente usando el lema.
+            -- Esto es más robusto que crear una hipótesis local con 'have'.
+            rw [intersection_of_ordered_pair x y]
+            -- El objetivo ahora es (⟨x, y⟩ \ {{x}}) = {{x, y}}, que es un lema.
             exact diff_ordered_pair_neq x y h_eq
-          -- Para probar esto, usamos el hecho de que el 'choose' debe estar en el conjunto s.
-          have h_mem_of_choose : choose ((nonempty_iff_exists_mem _).mp h_s_ne) ∈ ((⟨x, y⟩ : U) \ {(⋂ (⟨x, y⟩ : U))}) :=
-            choose_spec ((nonempty_iff_exists_mem _).mp h_s_ne)
-          -- Como s = {{x, y}}, el único elemento que puede escoger es {x, y}.
-          rw [h_s_eq] at h_mem_of_choose
+          -- Reemplazamos 's' en nuestra prueba de pertenencia.
+          rw [h_s_is_singleton] at h_mem_of_choose
+          -- Ahora tenemos: choose ... ∈ {{x, y}}.
+          -- Por la definición de singleton, esto implica que choose ... = {x, y}.
           exact (Singleton_is_specified {x, y} _).mp h_mem_of_choose
-
         -- Reemplazamos el 'choose' en el objetivo.
         rw [h_s_elem_eq]
         -- El objetivo ahora es: ⋂ ({x, y} \ ⋂ ⟨x, y⟩) = y
@@ -517,7 +525,6 @@ namespace SetUniverse
         rw [h_r_eq]
         -- El objetivo final es: ⋂ {y} = y, lo cual es cierto.
         exact Intersection_of_singleton y
-
 
     -- El teorema principal que une todo.
     @[simp]
