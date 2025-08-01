@@ -559,47 +559,43 @@ namespace SetUniverse
     theorem Eq_OrderedPairs (w v : U) :
       isOrderedPair w → isOrderedPair v → ((fst w = fst v ∧ snd w = snd v) ↔ (w = v))
         := by
-          intro h_w_is_op
+          intro h_w_is_op h_v_is_op
+          -- Obtenemos los componentes y sustituimos w y v por sus formas de par ordenado
           obtain ⟨x₁, y₁, h_w_eq⟩ := h_w_is_op
-          intro h_v_is_op
+          subst h_w_eq -- Reemplaza w con ⟨x₁, y₁⟩ en todo el contexto
           obtain ⟨x₂, y₂, h_v_eq⟩ := h_v_is_op
-          let xₒₙₑ : U := fst w
-          have h_fst_w_eq_w_1 : xₒₙₑ = x₁ := by
-            subst h_w_eq
-            exact fst_of_ordered_pair x₁ y₁
-          let yₒₙₑ : U := snd w
-          have h_snd_w_eq_w_2 : yₒₙₑ = y₁ := by
-            subst h_w_eq
-            exact snd_of_ordered_pair x₁ y₁
-          have h_w_eq' : w = ⟨xₒₙₑ, yₒₙₑ⟩ := OrderedPairSet_is_WellConstructed w ⟨x₁, y₁, h_w_eq⟩
-          let xₜᵥₒ : U := fst v
-          have h_fst_v_eq_v_1 : xₜᵥₒ = x₂ := by
-            subst h_v_eq
-            exact fst_of_ordered_pair x₂ y₂
-          let yₜᵥₒ : U := snd v
-          have h_snd_v_eq_v_2 : yₜᵥₒ = y₂ := by
-            subst h_v_eq
-            exact snd_of_ordered_pair x₂ y₂
-          have h_v_eq' : v = ⟨xₜᵥₒ, yₜᵥₒ⟩ := OrderedPairSet_is_WellConstructed v ⟨x₂, y₂, h_v_eq⟩
-          -- Ahora podemos usar las proyecciones para probar la equivalencia.
+          subst h_v_eq -- Reemplaza v con ⟨x₂, y₂⟩ en todo el contexto
+
+          -- Ahora el objetivo es mucho más claro:
+          -- (fst ⟨x₁, y₁⟩ = fst ⟨x₂, y₂⟩ ∧ snd ⟨x₁, y₁⟩ = snd ⟨x₂, y₂⟩) ↔ ⟨x₁, y₁⟩ = ⟨x₂, y₂⟩
+
+          -- Usamos los teoremas de corrección de fst y snd
+          simp only [fst_of_ordered_pair, snd_of_ordered_pair]
+
+          -- El objetivo ahora es (x₁ = x₂ ∧ y₁ = y₂) ↔ ⟨x₁, y₁⟩ = ⟨x₂, y₂⟩
           constructor
-          · intro h_proj_eq
-            -- Si las proyecciones son iguales, los pares ordenados son iguales.
-            have h₁ : xₒₙₑ = xₜᵥₒ := h_proj_eq.left
-            have h₂ : yₒₙₑ = yₜᵥₒ := h_proj_eq.right
-            rw [h_w_eq', h_v_eq', h₁, h₂]
-          · intro h_eq
-            -- Si w = v, entonces las proyecciones son iguales.
-            rw [h_eq]
-            exact ⟨rfl, rfl⟩
+          · -- Dirección ->
+            intro h_comps_eq
+            -- Si los componentes son iguales, los pares son iguales por reescritura
+            rw [h_comps_eq.1, h_comps_eq.2]
+          · -- Dirección <-
+            -- Esto es exactamente el teorema que ya has probado
+            apply Eq_of_OrderedPairs_given_projections
 
     /-! ### Relaciones y Funciones: Inyectividad, Sobreyectividad, Equivalencia y Orden ### -/
 
-    noncomputable def isRelation (w : U) : Prop :=
-      ∀ (z : U), (z ∈ w) ↔ (isOrderedPair z)
+    noncomputable def isRelation (R : U) : Prop :=
+      ∀ (z : U), (z ∈ R) ↔ (isOrderedPair z)
+
+    noncomputable def isRelation_in_Set (A B R : U) : Prop :=
+      ∀ (z : U), z ∈ R → ∃ (x y : U), z = ⟨ x , y ⟩ ∧ x ∈ A ∧ y ∈ B
 
     noncomputable def isRelation_in_Sets (A B R : U) : Prop :=
       ∀ (z : U), z ∈ R → ∃ (x y : U), z = ⟨ x , y ⟩ → x ∈ A ∧ y ∈ B
+
+    noncomputable def isReverseRelation (R S : U) : Prop :=
+      (∀ (z : U), (z ∈ R) ↔ ∃ (w : U), w ∈ S → w = ⟨ fst z , snd z ⟩)
+      ∧ (∀ (w : U), (w ∈ S) ↔ ∃ (z : U), z ∈ R → z = ⟨ snd w , fst w ⟩)
 
     noncomputable def domain (R : U) : U :=
       SpecSet (fst R) (fun x => ∃ y, ⟨ x , y ⟩ ∈ R)
