@@ -713,4 +713,6 @@ export SetUniverse.PairingAxiom (
     ordered_pair_eq_mem
     ordered_pair_neq_mem
     intersection_of_ordered_pair_neq_mem
+    Eq_of_OrderedPairs_given_projections
+    Eq_OrderedPairs
 )
