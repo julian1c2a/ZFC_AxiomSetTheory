@@ -231,6 +231,98 @@ namespace SetUniverse
             | inl hw_eq_singleton => rw [hw_eq_singleton]; exact hz_in_singleton
             | inr hw_eq_pair => rw [hw_eq_pair]; exact (PairSet_is_specified x y z).mpr (Or.inl hz_eq_x)
 
+    /-! ### Lemas auxiliares para las pruebas principales ### -/
+
+    lemma is_singleton_unique_elem (s a : U) :
+      s = {a} → ∀ x, x ∈ s → x = a
+        := by
+          intro h_s_eq x hx_in_s
+          rw [h_s_eq] at hx_in_s
+          exact (Singleton_is_specified a x).mp hx_in_s
+
+    lemma pair_set_eq_singleton (x : U) :
+      ({x, x} : U) = ({x} : U)
+        := by
+          apply ExtSet
+          intro z
+          rw [PairSet_is_specified, Singleton_is_specified, or_self]
+
+    lemma ordered_pair_self_eq_singleton_singleton (x : U) :
+      (⟨x, x⟩ : U) = ({{x}} : U)
+        := by
+          unfold OrderedPair
+          rw [pair_set_eq_singleton x] -- Simplifica {x, x} a {x}
+          rw [pair_set_eq_singleton ({x} : U)] -- Simplifica {{x}, {x}} a {{x}}
+
+    lemma diff_ordered_pair_neq (x y : U) (h_neq : x ≠ y) :
+      ((⟨x, y⟩ : U) \ ({{x}} : U)) = {{x, y}}
+        := by
+          apply ExtSet
+          intro z
+          rw [Difference_is_specified,
+              OrderedPair_is_specified,
+              Singleton_is_specified,
+              Singleton_is_specified]
+          constructor
+          · -- Dirección ->
+            intro h_diff
+            -- h_diff.1: z = {x} ∨ z = {x, y}
+            -- h_diff.2: z ≠ {x}
+            cases h_diff.1 with
+            | inl hz_eq_singleton_x =>
+              -- z = {x}, pero tenemos z ≠ {x} de h_diff.2, una contradicción
+              exfalso
+              exact h_diff.2 hz_eq_singleton_x
+            | inr hz_eq_pair =>
+              -- z = {x, y}, que es nuestro objetivo
+              exact hz_eq_pair
+          · -- Dirección <-
+            intro hz_eq_pair
+            -- hz_eq_pair: z = {x, y}
+            constructor
+            · -- Probar z ∈ ⟨x, y⟩
+              rw [hz_eq_pair]
+              exact Or.inr rfl
+            · -- Probar z ≠ {x}
+              rw [hz_eq_pair]
+              intro h_contra
+              -- h_contra: {x, y} = {x}
+              have h_y_in_lhs : y ∈ ({x, y} : U)
+                := (PairSet_is_specified x y y).mpr (Or.inr rfl)
+              rw [h_contra] at h_y_in_lhs -- Ahora tenemos y ∈ {x}
+              have h_y_eq_x : y = x := (Singleton_is_specified x y).mp h_y_in_lhs
+              -- Esto contradice h_neq
+              exact h_neq h_y_eq_x.symm
+
+    lemma diff_pair_singleton (x y : U) (h_neq : x ≠ y) :
+      (({x, y} : U) \ ({x} : U)) = ({y} : U) := by
+      apply ExtSet
+      intro z
+      rw [Difference_is_specified, PairSet_is_specified, Singleton_is_specified, Singleton_is_specified]
+      constructor
+      · -- Dirección ->
+        intro h_diff
+        -- h_diff is (z = x ∨ z = y) ∧ z ≠ x
+        cases h_diff.1 with
+        | inl hz_eq_x =>
+          -- z = x, pero tenemos z ≠ x de h_diff.2, una contradicción
+          exact (h_diff.2 hz_eq_x).elim
+        | inr hz_eq_y =>
+          -- z = y. El objetivo es z ∈ {y}, que es z = y.
+          exact hz_eq_y
+      · -- Dirección <-
+        intro hz_in_singleton_y -- Hipótesis: z ∈ {y}
+        -- Ahora hz_in_singleton_y : z = y
+        constructor
+        · -- Probar z ∈ {x, y}
+          -- El objetivo es z = x ∨ z = y. Ahora z = y.
+          exact Or.inr hz_in_singleton_y
+        · -- Probar z ∉ {x}
+          -- El objetivo es z ≠ x. Ahora z = y y la hipótesis h_neq: x ≠ y.
+          intro h_eq
+          exact h_neq (h_eq.symm ▸ hz_in_singleton_y)
+
+    /-! ### Lemas auxiliares para las pruebas principales de fst y snd ### -/
       lemma auxiliary_idempotence_of_or_in (x y : U) :
         x ∈ y ↔ x ∈ y ∨ x ∈ y
         := by
@@ -291,16 +383,6 @@ namespace SetUniverse
         rw [hz_eq_singleton];
         exact (Singleton_is_specified y y).mpr rfl;
       exact h_z_eq_sing_y
-
-    lemma pair_set_eq_singleton (x : U) : ({x, x} : U) = ({x} : U) := by
-      apply ExtSet
-      intro z
-      rw [PairSet_is_specified, Singleton_is_specified, or_self]
-
-    lemma ordered_pair_self_eq_singleton_singleton (x : U) : (⟨x, x⟩ : U) = ({{x}} : U) := by
-      unfold OrderedPair
-      rw [pair_set_eq_singleton x] -- Simplifica {x, x} a {x}
-      rw [pair_set_eq_singleton ({x} : U)] -- Simplifica {{x}, {x}} a {{x}}
 
     lemma diff_pair_sing_intersection (x y : U) :
       (x = y) → (((⟨x, y⟩ : U) \ ({(⋂ (⟨x, y⟩ : U))})) = (∅ : U))
@@ -369,7 +451,7 @@ namespace SetUniverse
               have h_y_eq_x := (Singleton_is_specified x y).mp h_y_in_x
               exact h_eq h_y_eq_x.symm
 
-
+    /-! ### Teoremas principales sobre la corrección de fst y snd ### -/
     -- Demostración de que fst recupera el primer elemento.
     theorem fst_of_ordered_pair (x y : U) :
       fst (⟨x, y⟩ : U) = x
@@ -389,84 +471,53 @@ namespace SetUniverse
       rw [intersection_of_ordered_pair, Intersection_of_singleton]
 
     -- Demostración de que snd recupera el segundo elemento.
+    -- Demostración de que snd recupera el segundo elemento.
     theorem snd_of_ordered_pair (x y : U) : snd ⟨x, y⟩ = y := by
       unfold snd
       by_cases h_eq : x = y
       -- Caso 1: x = y
-      · rw [h_eq]
-        exact snd_of_ordered_pair_eq y y rfl
+      · exact snd_of_ordered_pair_eq x y h_eq
       -- Caso 2: x ≠ y
-      · have h_I : (⋂ (⟨x, y⟩ : U)) = ({x} : U) := intersection_of_ordered_pair x y
-        have h_s_ne : ((⟨x, y⟩ \ ({{x}} : U)) ≠ ∅) := by
-          -- Use the explicit result from intersection_of_ordered_pair_neq_mem
-          have h_diff_eq : ((⟨x, y⟩ : U) \ ({({x} : U)} : U)) = ({{x, y}} : U) :=
-            by rw [←h_I]; exact intersection_of_ordered_pair_neq_mem x y h_eq
-          rw [h_diff_eq]
-          intro h_s_eq_empty
-          -- Now the goal is ({{x, y}} : U) = ∅, which is false since {x, y} ∈ {{x, y}}
-          have h_elem : ({x, y} : U) ∈ ({{x, y}} : U) := (Singleton_is_specified {x, y} {x, y}).mpr rfl
-          have h_empty : ({{x, y}} : U) = (∅ : U) := h_s_eq_empty
-          have h_absurd : ({x, y} : U) ∈ (∅ : U) := by rw [h_empty] at h_elem; exact h_elem
-          exfalso; exact EmptySet_is_empty {x, y} h_absurd
-        simp only [h_I]
-        have h_s_eq : ((⟨x, y⟩ : U) \ (⋂⟨x, y⟩ : U)) = ({{x, y}} : U) := by
-          apply ExtSet; intro z
-          rw [Difference_is_specified, OrderedPair_is_specified, Singleton_is_specified]
-          constructor
-          · intro h;
-            cases h.1 with
-            | inl h1 =>
-                exfalso
-                -- h1 : z = {x}
-                -- Need z ∈ ⋂⟨x, y⟩ to apply h.2
-                subst h1
-                rw [h_I] at h
-                -- Now the goal is {x} ∈ {x}, which is true by Singleton_is_specified
-                -- {x} ∈ {x} is true by Singleton_is_specified (use .mpr with rfl on the element, not the set)
-                exact h.2 ((Singleton_is_specified {x} {x}).mpr rfl)
-            | inr h2 => exact (Singleton_is_specified ({x,y} : U) z).mpr h2
-          · intro h;
-            have h_z_eq_xy := (Singleton_is_specified {x,y} z).mp h;
-            constructor
-            · exact (OrderedPair_is_specified x y z).mpr (Or.inr h_z_eq_xy)
-            · intro h_contra;
-              rw [h_z_eq_xy] at h_contra;
-              have h_inj : ({x,y} : U) = h_I := h_contra
-              rw [h_I] at h_inj
-              have h_y_in_x : y ∈ ({x} : U) := by
-                rw [←h_inj];
-                exact (PairSet_is_specified x y y).mpr (Or.inr rfl)
-              have h_y_eq_x := (Singleton_is_specified x y).mp h_y_in_x
-              exact h_eq h_y_eq_x.symm
-        have h_s_elem : choose ((nonempty_iff_exists_mem _).mp h_s_ne) = ({x, y} : U) := by
-          have h_s_is_singleton : ∀ a, a ∈ ({{x, y}} : U) → a = ({x, y} : U) := by
-            intro a ha;
-            exact (Singleton_is_specified {x, y} a).mp ha
-          apply h_s_is_singleton
-          rw [h_s_eq];
-          exact choose_spec ((nonempty_iff_exists_mem _).mp h_s_ne)
-        have h_r : (choose ((nonempty_iff_exists_mem _).mp h_s_ne) \ h_I) = ({y} : U) := by
-          rw [h_s_elem, h_I]
-          apply ExtSet; intro z
-          rw [Difference_is_specified, PairSet_is_specified, Singleton_is_specified]
-          constructor
-          · intro h;
-            have h_z_cases := h.1;
-            have h_z_neq_x := h.2;
-            cases h_z_cases with
-            | inl hz_eq_x =>
-              exfalso;
-              exact h_z_neq_x hz_eq_x
-            | inr hz_eq_y =>
-              exact (Singleton_is_specified y z).mpr hz_eq_y
-          · intro hz_in_y; have hz_eq_y := (Singleton_is_specified y z).mp hz_in_y; constructor
-            · exact (PairSet_is_specified x y z).mpr (Or.inr hz_eq_y)
-            · intro h_z_eq_x;
-              rw [hz_eq_y] at h_z_eq_x;
-              exact h_eq h_z_eq_x.symm
-        have h_final : (⋂ ( (choose ((nonempty_iff_exists_mem ((⟨x, y⟩ : U) \ {h_I})).mp h_s_ne)) \ h_I )) = y := by
-          rw [h_r, Intersection_of_singleton]
-        exact h_final
+      · -- El objetivo es (if h : s = ∅ then ... else ...), donde s = ⟨x, y⟩ \ {⋂⟨x, y⟩}
+        -- Primero, probamos que la condición del 'if' es falsa.
+        have h_s_ne : ((⟨x, y⟩ : U) \ {(⋂ (⟨x, y⟩ : U))}) ≠ ∅ := by
+          have h_I : (⋂ (⟨x, y⟩ : U)) = {x} := intersection_of_ordered_pair x y
+          rw [h_I] -- El conjunto es ⟨x, y⟩ \ {{x}}
+          have h_s_eq : (⟨x, y⟩ \ ({{x}}: U)) = {{x, y}} := diff_ordered_pair_neq x y h_eq
+          rw [h_s_eq]
+          intro h_contra -- Suponemos {{x, y}} = ∅ para llegar a una contradicción
+          have h_mem : ({x, y} : U) ∈ ({{x, y}} : U) := (Singleton_is_specified _ _).mpr rfl
+          rw [h_contra] at h_mem
+          exact EmptySet_is_empty _ h_mem
+
+        -- Como la condición es falsa, el 'if' se resuelve a la rama 'else'.
+        simp only [dif_neg h_s_ne]
+
+        -- El objetivo ahora es: ⋂ (choose (...) \ ⋂ ⟨x, y⟩) = y
+        -- Probamos que el 'choose' selecciona el único elemento de s, que es {x, y}.
+        have h_s_elem_eq : choose ((nonempty_iff_exists_mem ((⟨x, y⟩ : U) \ {(⋂ (⟨x, y⟩ : U))})).mp h_s_ne) = {x, y} := by
+          have h_I : (⋂ (⟨x, y⟩ : U)) = {x} := intersection_of_ordered_pair x y
+          have h_s_eq : ((⟨x, y⟩ : U) \ {(⋂ (⟨x, y⟩ : U))}) = ({({x, y} : U)} : U) := by
+            rw[h_I];
+            exact diff_ordered_pair_neq x y h_eq
+          -- Para probar esto, usamos el hecho de que el 'choose' debe estar en el conjunto s.
+          have h_mem_of_choose : choose ((nonempty_iff_exists_mem _).mp h_s_ne) ∈ ((⟨x, y⟩ : U) \ {(⋂ (⟨x, y⟩ : U))}) :=
+            choose_spec ((nonempty_iff_exists_mem _).mp h_s_ne)
+          -- Como s = {{x, y}}, el único elemento que puede escoger es {x, y}.
+          rw [h_s_eq] at h_mem_of_choose
+          exact (Singleton_is_specified {x, y} _).mp h_mem_of_choose
+
+        -- Reemplazamos el 'choose' en el objetivo.
+        rw [h_s_elem_eq]
+        -- El objetivo ahora es: ⋂ ({x, y} \ ⋂ ⟨x, y⟩) = y
+        have h_I : (⋂ (⟨x, y⟩ : U)) = {x} := intersection_of_ordered_pair x y
+        rw [h_I]
+        -- El objetivo ahora es: ⋂ ({x, y} \ {x}) = y
+        have h_r_eq : (({x, y} : U) \ ({x} : U)) = {y} := diff_pair_singleton x y h_eq
+        rw [h_r_eq]
+        -- El objetivo final es: ⋂ {y} = y, lo cual es cierto.
+        exact Intersection_of_singleton y
+
 
     -- El teorema principal que une todo.
     @[simp]
