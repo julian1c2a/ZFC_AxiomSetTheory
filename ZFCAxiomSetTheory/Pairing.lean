@@ -232,6 +232,7 @@ namespace SetUniverse
             | inr hw_eq_pair => rw [hw_eq_pair]; exact (PairSet_is_specified x y z).mpr (Or.inl hz_eq_x)
 
     /-! ### Lemas auxiliares para las pruebas principales ### -/
+    /-! ### Lemas auxiliares para las pruebas principales de fst y snd ### -/
 
     lemma is_singleton_unique_elem (s a : U) :
       s = {a} → ∀ x, x ∈ s → x = a
@@ -322,7 +323,6 @@ namespace SetUniverse
           intro h_eq
           exact h_neq (h_eq.symm ▸ hz_in_singleton_y)
 
-    /-! ### Lemas auxiliares para las pruebas principales de fst y snd ### -/
       lemma auxiliary_idempotence_of_or_in (x y : U) :
         x ∈ y ↔ x ∈ y ∨ x ∈ y
         := by
@@ -357,7 +357,7 @@ namespace SetUniverse
       have h_I : ((⋂ ( (⟨ y, y ⟩) : U)) : U) = ({ y } : U) := (intersection_of_ordered_pair y y)
       have h_s : ((⟨y, y⟩ : U) \ ({{y}} : U)) = (∅ : U) := by
         calc
-          ((⟨ y , y ⟩ : U) \ ({{y}} : U) : U) = ((({({y} : U), ({y, y} : U)} : U)  \ ({({y} : U)} : U)) : U) := by rfl
+          ((⟨ y , y ⟩ : U) \ ({{y}} : U) : U) = ((({({y} : U), ({y, y} : U)} : U) \ ({({y} : U)} : U)) : U) := by rfl
           _ = ((({({y} : U), ({y} : U)} : U)  \ ({({y} : U)} : U)) : U) := by rfl
           _ = ((({({y} : U)} : U)  \ ({({y} : U)} : U)) : U) := by rfl
           _ = (∅ : U) := Difference_self_empty ({({y} : U)} : U)
@@ -453,6 +453,7 @@ namespace SetUniverse
 
     /-! ### Teoremas principales sobre la corrección de fst y snd ### -/
     -- Demostración de que fst recupera el primer elemento.
+    @[simp]
     theorem fst_of_ordered_pair (x y : U) :
       fst (⟨x, y⟩ : U) = x
         := by
@@ -471,6 +472,7 @@ namespace SetUniverse
       rw [intersection_of_ordered_pair, Intersection_of_singleton]
 
     -- Demostración de que snd recupera el segundo elemento.
+    @[simp]
     theorem snd_of_ordered_pair (x y : U) : snd ⟨x, y⟩ = y := by
       unfold snd
       by_cases h_eq : x = y
@@ -479,8 +481,8 @@ namespace SetUniverse
       -- Caso 2: x ≠ y
       · -- El objetivo es (if h : s = ∅ then ... else ...), donde s = ⟨x, y⟩ \ {⋂⟨x, y⟩}
         -- Primero, probamos que la condición del 'if' es falsa.
-        have h_s_ne : ((⟨x, y⟩ : U) \ {(⋂ (⟨x, y⟩ : U))}) ≠ ∅ := by
-          have h_I : (⋂ (⟨x, y⟩ : U)) = {x} := intersection_of_ordered_pair x y
+        have h_s_ne : ((⟨x, y⟩ : U) \ {(⋂ (⟨x, y⟩ : U))}) ≠ (∅ : U) := by
+          have h_I : (⋂ (⟨x, y⟩ : U)) = ({x} : U) := intersection_of_ordered_pair x y
           rw [h_I] -- El conjunto es ⟨x, y⟩ \ {{x}}
           have h_s_eq : ((⟨x, y⟩ : U) \ ({{x}} : U)) = ({{x, y}} : U) := diff_ordered_pair_neq x y h_eq
           rw [h_s_eq]
@@ -488,13 +490,15 @@ namespace SetUniverse
           have h_mem : ({x, y} : U) ∈ ({{x, y}} : U) := (Singleton_is_specified _ _).mpr rfl
           rw [h_contra] at h_mem
           exact EmptySet_is_empty _ h_mem
+
         -- Como la condición es falsa, el 'if' se resuelve a la rama 'else'.
         simp only [dif_neg h_s_ne]
+
         -- El objetivo ahora es: ⋂ (choose (...) \ ⋂ ⟨x, y⟩) = y
         -- Probamos que el 'choose' selecciona el único elemento de s, que es {x, y}.
         have h_s_elem_eq :
           choose ((nonempty_iff_exists_mem ((⟨x, y⟩ : U) \ {(⋂ (⟨x, y⟩ : U))})).mp h_s_ne) = ({x, y} : U)
-          := by
+            := by
           -- Sea 's' el conjunto del que estamos escogiendo.
           let s := (⟨x, y⟩ : U) \ {(⋂ (⟨x, y⟩ : U))}
           -- La propiedad de 'choose' nos dice que el elemento escogido está en 's'.
@@ -506,22 +510,22 @@ namespace SetUniverse
             -- hacemos explícito el objetivo con 'change'.
             change ((⟨x, y⟩ : U) \ {(⋂ (⟨x, y⟩ : U))}) = ({{x, y}} : U)
             -- Reemplazamos la intersección directamente usando el lema.
-            -- Esto es más robusto que crear una hipótesis local con 'have'.
             rw [intersection_of_ordered_pair x y]
             -- El objetivo ahora es (⟨x, y⟩ \ {{x}}) = {{x, y}}, que es un lema.
             exact diff_ordered_pair_neq x y h_eq
-          -- Reemplazamos 's' en nuestra prueba de pertenencia.
-          rw [h_s_is_singleton] at h_mem_of_choose
-          -- Ahora tenemos: choose ... ∈ {{x, y}}.
-          -- Por la definición de singleton, esto implica que choose ... = {x, y}.
-          exact (Singleton_is_specified {x, y} _).mp h_mem_of_choose
+          -- Usamos el lema que dice que si un conjunto es un singleton,
+          -- cualquier elemento de ese conjunto es igual al elemento del singleton.
+          apply is_singleton_unique_elem s ({x, y} : U) h_s_is_singleton
+          -- El elemento que nos interesa es el que 'choose' nos da.
+          exact h_mem_of_choose
+
         -- Reemplazamos el 'choose' en el objetivo.
         rw [h_s_elem_eq]
         -- El objetivo ahora es: ⋂ ({x, y} \ ⋂ ⟨x, y⟩) = y
-        have h_I : (⋂ (⟨x, y⟩ : U)) = {x} := intersection_of_ordered_pair x y
+        have h_I : (⋂ (⟨x, y⟩ : U)) = ({x} : U) := intersection_of_ordered_pair x y
         rw [h_I]
         -- El objetivo ahora es: ⋂ ({x, y} \ {x}) = y
-        have h_r_eq : (({x, y} : U) \ ({x} : U)) = {y} := diff_pair_singleton x y h_eq
+        have h_r_eq : (({x, y} : U) \ ({x} : U)) = ({y} : U) := diff_pair_singleton x y h_eq
         rw [h_r_eq]
         -- El objetivo final es: ⋂ {y} = y, lo cual es cierto.
         exact Intersection_of_singleton y
@@ -645,62 +649,14 @@ export SetUniverse.PairingAxiom (
     isInyective
     isSurjectiveFunction
     isBijectiveFunction
+    is_singleton_unique_elem
+    pair_set_eq_singleton
+    ordered_pair_self_eq_singleton_singleton
+    diff_ordered_pair_neq
+    diff_pair_singleton
+    auxiliary_idempotence_of_or_in
+    auxiliary_idempotence_of_or_eq
+    ordered_pair_eq_mem
+    ordered_pair_neq_mem
+    intersection_of_ordered_pair_neq_mem
 )
-
-/-!
-  w = ⟨ x, y ⟩ = { { x } , { x , y } }
-
-  fst w = choose (∃ (z : U), z ∈ (⋂ w))
-  snd w = choose (∃ (z : U), z ∈ ( ( w \ { ⋂ w } ) \ (⋂ w) ) )
-
-  w = ⟨ x, y ⟩ = { { x } , { x , y } }
-  fst w  -- No interfiere si x = y o si x ≠ y
-    ⋂ w = { x } ∩ { x, y } = { x }
-    ∃! (z: U), z ∈ ⋂ w ↔ z = x
-    ∃! (z: U), z ∈ { x } ↔ z = x
-
-  w = { }
-  { x } = ∅ !!!
-  { x , y } = ∅ !!!
-
-  snd w
-    -- caso x ≠ y
-    ⋂ w = { x } ∩ { x, y } = { x }
-    {⋂ w} ={ { x } }
-    s = w \ { ⋂ w } = { { x }, { x  , y } } \ { { x } } =
-      = { { x  , y } }
-    z = choose ( ∃ (z : U), z ∈ s )
-    z == { x , y }
-    t = z \ ⋂ w
-    t == { x , y } \ { x } == { y }
-    snd w = choose ( ∃ (z : U), z ∈ t )
-    -- caso x = y
-    ⋂ w = { x } ∩ { x, x } = { x }
-    {⋂ w} ={ { x } }
-    s = w \ { ⋂ w } = { { x }, { x  , x } } \ { { x } } =
-      = { { x } } \ { { x } } = ∅
-    snd w = s
-
-    -- en general
-    -- ⋂ w = { x } ∩ { x, y } = { x }
-    -- {⋂ w} ={ { x } }
-    -- s = w \ { ⋂ w } = { { x }, { x  , y } } \ { { x } } =
-    --   = { { x  , y } }
-    let s : U := w \ { (⋂ w) }
-    if h: s = ∅ then
-      ∅
-    else
-      let z : U := choose ( ∃ (z : U), z ∈ s )
-      -- z == { x , y }
-      let t : U := z \ (⋂ w)
-      -- t == { x , y } \ { x } == { y }
-      choose ( ∃ (z : U), z ∈ t )
-
-    let s : U := w \ { (⋂ w) }
-    if h: s = ∅ then
-      ∅
-    else
-      let z : U := choose ( ∃ (z : U), z ∈ s )
-      let t : U := z \ (⋂ w)
-      choose ( ∃ (z : U), z ∈ t )
--/
