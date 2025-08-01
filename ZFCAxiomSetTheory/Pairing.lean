@@ -405,16 +405,26 @@ namespace SetUniverse
           intro h_s_eq_empty
           -- Now the goal is ({{x, y}} : U) = ∅, which is false since {x, y} ∈ {{x, y}}
           have h_elem : ({x, y} : U) ∈ ({{x, y}} : U) := (Singleton_is_specified {x, y} {x, y}).mpr rfl
-          exact EmptySet_is_empty ({x, y} : U) h_elem
-        rw [dif_neg h_s_ne]
-        have h_s_eq : ((⟨x, y⟩ : U) \ ({h_I} : U)) = ({{x, y}} : U) := by
+          have h_empty : ({{x, y}} : U) = (∅ : U) := h_s_eq_empty
+          have h_absurd : ({x, y} : U) ∈ (∅ : U) := by rw [h_empty] at h_elem; exact h_elem
+          exfalso; exact EmptySet_is_empty {x, y} h_absurd
+        simp only [h_I]
+        have h_s_eq : ((⟨x, y⟩ : U) \ (⋂⟨x, y⟩ : U)) = ({{x, y}} : U) := by
           apply ExtSet; intro z
           rw [Difference_is_specified, OrderedPair_is_specified, Singleton_is_specified]
           constructor
           · intro h;
             cases h.1 with
-            | inl h1 => exfalso; exact h.2 h1
-            | inr h2 => exact (Singleton_is_specified {x,y} z).mpr h2
+            | inl h1 =>
+                exfalso
+                -- h1 : z = {x}
+                -- Need z ∈ ⋂⟨x, y⟩ to apply h.2
+                subst h1
+                rw [h_I] at h
+                -- Now the goal is {x} ∈ {x}, which is true by Singleton_is_specified
+                -- {x} ∈ {x} is true by Singleton_is_specified (use .mpr with rfl on the element, not the set)
+                exact h.2 ((Singleton_is_specified {x} {x}).mpr rfl)
+            | inr h2 => exact (Singleton_is_specified ({x,y} : U) z).mpr h2
           · intro h;
             have h_z_eq_xy := (Singleton_is_specified {x,y} z).mp h;
             constructor
