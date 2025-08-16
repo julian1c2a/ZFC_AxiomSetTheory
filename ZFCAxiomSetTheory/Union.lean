@@ -271,19 +271,20 @@ namespace SetUniverse
           have hC_nonempty' : ∃ y, y ∈ C :=
             by
               -- If C = ∅, this contradicts hC_non_empty
-              by_contra h
+              apply Classical.by_contradiction
+              intro h
               -- Since h : ¬∃ y, y ∈ C, but we have ⟨y, hy⟩, contradiction
               exact False.elim (h ⟨y, hy⟩)
-            apply hC_non_empty
-            apply ExtSet
-            intro z
-            constructor
-              · intro hz_in_C
-                -- Since ¬∃y, y ∈ C, so all z ∉ C
-                exfalso
-                exact h ⟨z, hz_in_C⟩
-              · intro hz_in_empty
-                exact False.elim (EmptySet_is_empty z hz_in_empty)
+              apply hC_non_empty
+              apply ExtSet
+              intro z
+              constructor
+                · intro hz_in_C
+                  -- Since ¬∃y, y ∈ C, so all z ∉ C
+                  exfalso
+                  exact h ⟨z, hz_in_C⟩
+                · intro hz_in_empty
+                  exact False.elim (EmptySet_is_empty z hz_in_empty)
           cases hC_nonempty' with
           | intro y hy =>
             -- every element of C is ∅, so y = ∅, so ∅ ∈ C
