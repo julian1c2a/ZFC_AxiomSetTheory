@@ -1,0 +1,10 @@
+name = "ZFC_AxiomSetTheory"
+version = "0.1.0"
+defaultTargets = ["zfc_axiomsettheory"]
+
+[[lean_lib]]
+name = "ZFCAxiomSetTheory"
+
+[[lean_exe]]
+name = "zfc_axiomsettheory"
+root = "Main"

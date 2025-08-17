@@ -137,29 +137,85 @@ namespace SetUniverse
       (hC_not_singleton_empty : C ≠ ({∅} : U)) :
         (⋃ C) ≠ (∅ : U)
           := by
-      intro h_union_empty
-      apply hC_not_empty
-      apply ExtSet
-      intro x
-      constructor
-      · intro hx
-        -- x ∈ C, but ⋃ C = ∅, so for any x, x ∉ ⋃ C,
-        -- so there cannot exist S ∈ C ∧ x ∈ S.
-        -- But if x ∈ C, then if x ∈ x, we would have
-        -- S := x, S ∈ C ∧ x ∈ S, contradiction.
-        -- However, x ∈ x is not generally true, so instead,
-        -- we argue by contradiction:
-        have : ¬∃ (S : U), S ∈ C ∧ x ∈ S := by
-          rw [←UnionSet_is_specified, h_union_empty]
-          exact (EmptySet_is_empty x)
-        -- But if x ∈ C and x ∈ x, then
-        -- ⟨x, hx, ‹x ∈ x›⟩ : ∃ S, S ∈ C ∧ x ∈ S, contradiction.
-        -- Since we cannot guarantee x ∈ x, we cannot construct
-        -- such S, so the assumption x ∈ C must be false.
-        exact False.elim (this ⟨x, hx, sorry⟩)
-      · intro hx
-        -- x ∈ ∅ → x ∈ C is vacuously true
-        exact False.elim (EmptySet_is_empty x hx)
+@[simp]
+    theorem Set_is_empty_3 (C : U)
+      (hC_not_empty : C ≠ (∅ : U))
+      (hC_not_singleton_empty : C ≠ ({∅} : U)) :
+        (⋃ C) ≠ (∅ : U)
+          := by
+        -- Empezamos la prueba por reducción al absurdo asumiendo lo contrario.
+        -- h_union_empty : (⋃ C) = ∅
+        intro h_union_empty
+        -- Nuestro objetivo es contradecir una de las hipótesis. Elegimos hC_not_singleton_empty.
+        -- Para ello, demostraremos que nuestra suposición implica C = {∅}.
+        apply hC_not_singleton_empty
+
+        -- Demostramos C = {∅} usando el Axioma de Extensionalidad.
+        apply ExtSet
+        intro x
+        constructor
+
+        -- Primera dirección: x ∈ C → x ∈ {∅}
+        · intro hx_in_C -- Asumimos que x es un elemento de C.
+          -- Para demostrar que x ∈ {∅}, por la definición de singulete, debemos probar que x = ∅.
+          rw [Singleton_is_specified]
+          -- Usamos de nuevo Extensionalidad para probar x = ∅.
+          apply ExtSet
+          intro y
+          constructor
+
+          -- Probamos que si y ∈ x, entonces y ∈ ∅ (lo cual es falso).
+          · intro hy_in_x
+            -- Por definición de la unión, si x ∈ C y y ∈ x, entonces y ∈ (⋃ C).
+            have hy_in_union : y ∈ (⋃ C) := (UnionSet_is_specified C y).mpr ⟨x, hx_in_C, hy_in_x⟩
+            -- Usamos nuestra suposición inicial de que (⋃ C) = ∅.
+            rw [h_union_empty] at hy_in_union
+            -- Ahora tenemos y ∈ ∅, que es lo que queríamos probar.
+            exact hy_in_union
+
+          -- La otra dirección (y ∈ ∅ → y ∈ x) es trivialmente cierta.
+          · intro hy_in_empty
+            exact False.elim (EmptySet_is_empty y hy_in_empty)
+
+        -- Segunda dirección: x ∈ {∅} → x ∈ C
+        · intro hx_in_singleton -- Asumimos x ∈ {∅}, lo que implica x = ∅.
+          rw [Singleton_is_specified] at hx_in_singleton
+          -- Sustituimos x por ∅. El objetivo ahora es demostrar ∅ ∈ C.
+          subst hx_in_singleton
+
+          -- Sabemos por la hipótesis hC_not_empty que C no es vacío, por lo que existe al menos un elemento en C.
+          have h_exists_mem_C : ∃ y, y ∈ C := by
+            -- Esto se demuestra por contradicción. Si no existiera tal y, C sería ∅.
+            apply Classical.byContradiction
+            intro h_not_exists_mem
+            apply hC_not_empty
+            apply ExtSet
+            intro z
+            constructor
+            · intro hz_in_C
+              exact False.elim (h_not_exists_mem ⟨z, hz_in_C⟩)
+            · intro hz_in_empty
+              exact False.elim (EmptySet_is_empty z hz_in_empty)
+
+          -- Obtenemos ese elemento, al que llamamos 'y'.
+          obtain ⟨y, hy_in_C⟩ := h_exists_mem_C
+
+          -- Ahora demostramos que este elemento 'y' tiene que ser ∅.
+          -- La lógica es idéntica a la usada en la primera dirección de la prueba principal.
+          have hy_is_empty : y = (∅ : U) := by
+            apply ExtSet
+            intro z
+            constructor
+            · intro hz_in_y
+              have hz_in_union : z ∈ (⋃ C) := (UnionSet_is_specified C z).mpr ⟨y, hy_in_C, hz_in_y⟩
+              rw [h_union_empty] at hz_in_union
+              exact hz_in_union
+            · intro hz_in_empty
+              exact False.elim (EmptySet_is_empty z hz_in_empty)
+
+          -- Como y ∈ C y hemos demostrado que y = ∅, podemos concluir que ∅ ∈ C.
+          rw [←hy_is_empty]
+          exact hy_in_C
 
     @[simp]
     theorem UnionSet_is_empty' (C : U) :
