@@ -135,8 +135,8 @@ namespace SetUniverse
     theorem Set_is_empty_3 (C : U)
       (hC_not_empty : C ≠ (∅ : U))
       (hC_not_singleton_empty : C ≠ ({∅} : U)) :
-      (⋃ C) ≠ (∅ : U)
-        := by
+        (⋃ C) ≠ (∅ : U)
+          := by
       intro h_union_empty
       apply hC_not_empty
       apply ExtSet
@@ -310,7 +310,9 @@ namespace SetUniverse
 end SetUniverse
 
 export SetUniverse.UnionAxiom (
-
+  UnionSet_is_specified
+  UnionSet_is_empty
+  UnionSet_non_empty
 )
 
 /-!
