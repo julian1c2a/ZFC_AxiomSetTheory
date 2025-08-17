@@ -310,9 +310,18 @@ namespace SetUniverse
 end SetUniverse
 
 export SetUniverse.UnionAxiom (
-  UnionSet_is_specified
+  Union
+  UnionExistsUnique
+  Union_is_specified
+  UnionSet
   UnionSet_is_empty
-  UnionSet_non_empty
+  UnionSet_is_empty'
+  UnionSet_is_specified
+  UnionSet_is_unique
+  Set_is_empty_1
+  Set_is_empty_2
+  Set_is_empty_3
+  UnionSetIsEmpty_SetNonEmpty_SingletonEmptySet
 )
 
 /-!
